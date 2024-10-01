@@ -1,0 +1,3 @@
+export const TIMESTAMP_PRECISION: number = 3;
+
+export const DEFAULT_TIMESTAMP: string = `CURRENT_TIMESTAMP(${TIMESTAMP_PRECISION})`;
