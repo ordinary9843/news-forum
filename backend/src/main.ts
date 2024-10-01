@@ -19,8 +19,8 @@ const initSwagger = (app: NestExpressApplication) => {
       app,
       new DocumentBuilder()
         .addBearerAuth()
-        .setTitle('ShibaVocabulary')
-        .setDescription('ShibaVocabulary API documentation')
+        .setTitle('News Forum')
+        .setDescription('News Forum API documentation')
         .setVersion('1.0')
         .build(),
     ),

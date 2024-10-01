@@ -1,43 +1,42 @@
-version: "3"
 services:
-  nginx:
-    build: ./docker/nginx/
-    image: ${DOCKER_PREFIX}-nginx
-    container_name: ${DOCKER_PREFIX}-nginx
-    restart: always
-    ports:
-      - 80:80
-    volumes:
-      - ./docker/nginx/conf/default.conf:/etc/nginx/conf.d/default.conf
-      - ./docker/nginx/log:/var/log/nginx
-    environment:
-      - TZ=${TZ}
-    command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
-    networks:
-      - app-server
-    depends_on:
-      - backend
-    links:
-      - backend
-  backend:
-    build:
-      context: ./
-      dockerfile: ./docker/backend/Dockerfile
-    image: ${DOCKER_PREFIX}-backend
-    container_name: ${DOCKER_PREFIX}-backend
-    ports:
-      - 3000:3000
-    restart: always
-    env_file:
-      - .env
-    networks:
-      - app-server
-    depends_on:
-      - postgres
-      - redis
-    links:
-      - postgres
-      - redis
+  # nginx:
+  #   build: ./docker/nginx/
+  #   image: ${DOCKER_PREFIX}-nginx
+  #   container_name: ${DOCKER_PREFIX}-nginx
+  #   restart: always
+  #   ports:
+  #     - 80:80
+  #   volumes:
+  #     - ./docker/nginx/conf/default.conf:/etc/nginx/conf.d/default.conf
+  #     - ./docker/nginx/log:/var/log/nginx
+  #   environment:
+  #     - TZ=${TZ}
+  #   command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
+  #   networks:
+  #     - app-server
+  #   depends_on:
+  #     - backend
+  #   links:
+  #     - backend
+  # backend:
+  #   build:
+  #     context: ./
+  #     dockerfile: ./docker/backend/Dockerfile
+  #   image: ${DOCKER_PREFIX}-backend
+  #   container_name: ${DOCKER_PREFIX}-backend
+  #   ports:
+  #     - 3000:3000
+  #   restart: always
+  #   env_file:
+  #     - .env
+  #   networks:
+  #     - app-server
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #   links:
+  #     - postgres
+  #     - redis
   postgres:
     image: postgres:latest
     container_name: ${DOCKER_PREFIX}-postgres

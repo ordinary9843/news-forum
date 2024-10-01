@@ -18,13 +18,13 @@ class TypeOrmConfig extends Config {
   }
 }
 
-export const typeormConfig: DataSourceOptions = {
+export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
   ...new TypeOrmConfig().getConfig(),
 };
 
 export default new DataSource({
-  ...typeormConfig,
+  ...dataSourceOptions,
   entities: ['src/entities/*/entity{.ts,.js}'],
   migrations: ['src/migrations/*{.ts,.js}'],
 });
