@@ -5,7 +5,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { json } from 'express';
 
-import { AppModule } from './apis/app/module';
+import { AppModule } from './modules/app/module';
 import { HttpExceptionFilter } from './filters/http-exception/filter';
 import { HttpResponseInterceptor } from './interceptors/http-response/interceptor';
 

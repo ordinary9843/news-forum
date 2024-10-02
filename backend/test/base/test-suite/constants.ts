@@ -8,7 +8,7 @@ import { map } from 'lodash';
 
 import { Repository } from 'typeorm';
 
-import { QueueType } from '../../../src/apis/app/enum';
+import { QueueType } from '../../../src/modules/app/enum';
 import { RedisService } from '../../../src/modules/redis/service';
 
 export const MOCK_REDIS_CLIENT: jest.Mocked<Redis> = {

@@ -1,5 +1,3 @@
-import { join } from 'path';
-
 import { BullModule } from '@nestjs/bull';
 import { Module, NestModule } from '@nestjs/common';
 
@@ -9,18 +7,16 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { NewsModule } from 'src/apis/news/module';
+
 import Configs from '../../configs';
 import { dataSourceOptions } from '../../configs/typeorm/config';
 import { HttpExceptionFilter } from '../../filters/http-exception/filter';
 import { HttpResponseInterceptor } from '../../interceptors/http-response/interceptor';
 
-import { DateModule } from '../../modules/date/module';
-import { JsonModule } from '../../modules/json/module';
-import { RedisModule } from '../../modules/redis/module';
-
-
-import { AppController } from './controller';
-import { AppService } from './service';
+import { DateModule } from '../date/module';
+import { JsonModule } from '../json/module';
+import { RedisModule } from '../redis/module';
 
 @Module({
   imports: [
@@ -41,6 +37,7 @@ import { AppService } from './service';
       load: Configs,
     }),
     DateModule,
+    NewsModule,
     JsonModule,
     RedisModule,
     TypeOrmModule.forRootAsync({
@@ -61,9 +58,7 @@ import { AppService } from './service';
       ],
     }),
   ],
-  controllers: [AppController],
   providers: [
-    AppService,
     HttpExceptionFilter,
     HttpResponseInterceptor,
     {
