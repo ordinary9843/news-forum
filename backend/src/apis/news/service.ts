@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { Parser } from 'xml2js';
 
 import { RSS_URL } from './constant';
-import { Category, LanguageQuery } from './enum';
+import { Category, LocaleQuery } from './enum';
 import { DemoResponse, RssFeed } from './type';
 
 @Injectable()
@@ -12,8 +12,8 @@ export class NewsService {
 
   async demo(): Promise<DemoResponse> {
     try {
-      const url: string = `${RSS_URL}/topics/${Category.GLOBAL}?${LanguageQuery.ZH_TW}`;
-      const response: any = await axios.get(url);
+      const url: string = `${RSS_URL}/topics/${Category.GLOBAL}?${LocaleQuery.ZH_TW}`;
+      const response: AxiosResponse = await axios.get(url);
       const parser: Parser = new Parser();
       const rssFeed: RssFeed = await parser.parseStringPromise(response.data);
 

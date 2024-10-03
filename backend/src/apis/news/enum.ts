@@ -1,4 +1,8 @@
-export enum LanguageQuery {
+export enum Locale {
+  ZH_TW = 'ZH_TW',
+}
+
+export enum LocaleQuery {
   ZH_TW = 'hl=zh-TW&gl=TW&ceid=TW:zh-Hant',
 }
 
