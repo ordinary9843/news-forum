@@ -1,4 +1,3 @@
-import { getQueueToken } from '@nestjs/bull';
 import { Provider } from '@nestjs/common';
 
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -8,7 +7,6 @@ import { map } from 'lodash';
 
 import { Repository } from 'typeorm';
 
-import { QueueType } from '../../../src/modules/app/enum';
 import { RedisService } from '../../../src/modules/redis/service';
 
 export const MOCK_REDIS_CLIENT: jest.Mocked<Redis> = {
@@ -21,13 +19,6 @@ export const MOCK_REDIS_CLIENT: jest.Mocked<Redis> = {
 export const MOCK_REDIS_SERVICE: Provider = {
   provide: RedisService,
   useValue: MOCK_REDIS_CLIENT,
-};
-
-export const MOCK_EMAIL_QUEUE: Provider = {
-  provide: getQueueToken(QueueType.EMAIL),
-  useValue: {
-    add: jest.fn(),
-  },
 };
 
 export const MOCK_REPOSITORIES = (

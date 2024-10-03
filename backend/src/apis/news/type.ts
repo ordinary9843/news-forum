@@ -33,4 +33,23 @@ export type RssFeed = {
   };
 };
 
-export type DemoResponse = FeedChannel[];
+export type NewsItem = {
+  guid: string;
+  link: string;
+  title: string;
+  description: string;
+  source: string;
+  pubDate: Date;
+};
+
+export type DemoResponse = void;
+
+export type SaveNewsResult = void;
+
+export type FetchNewsResult = RssFeed;
+
+export type DoesNewsExistResult = boolean;
+
+export type ExtractNewsItemResult = NewsItem;
+
+export type IsValidNewsItemResult = boolean;

@@ -7,33 +7,32 @@ import {
   AfterLoad,
 } from 'typeorm';
 
-import { Locale } from '../../apis/news/enum';
-import { BaseEntity } from '../base/abstract.entity';
 import { TIMESTAMP_PRECISION, DEFAULT_TIMESTAMP } from '../constant';
 
-import { LOCALE_ENUM_NAME, TABLE_NAME } from './constant';
+import { CATEGORY_ENUM_NAME, LOCALE_ENUM_NAME, TABLE_NAME } from './constant';
+import { Category, Locale } from './enum';
 
 @Entity(TABLE_NAME)
-export class ExchangeRateEntity extends BaseEntity<ExchangeRateEntity> {
+export class NewsEntity {
   @AfterLoad()
   setup(): void {}
 
   @PrimaryGeneratedColumn({ type: 'int' })
   id: number;
 
-  @Column({
-    type: 'date',
-    nullable: true,
-  })
-  date: string;
-
   @Column({ type: 'enum', enumName: LOCALE_ENUM_NAME })
   locale: Locale;
 
-  @Column({ type: 'varchar', length: 255, unique: true })
+  @Column({ type: 'enum', enumName: CATEGORY_ENUM_NAME })
+  category: Category;
+
+  @Column({ type: 'text', unique: true })
   guid: string;
 
-  @Column({ type: 'varchar', length: 255, unique: true })
+  @Column({ name: 'google_link', type: 'text' })
+  googleLink: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
   link: string;
 
   @Column({ type: 'varchar', length: 255 })
@@ -46,11 +45,11 @@ export class ExchangeRateEntity extends BaseEntity<ExchangeRateEntity> {
   source: string;
 
   @Column({
-    name: 'is_description_retrieved',
+    name: 'is_metadata_retrieved',
     type: 'boolean',
     default: false,
   })
-  isDescriptionRetrieved: boolean;
+  isMetadataRetrieved: boolean;
 
   @Column({
     name: 'published_at',

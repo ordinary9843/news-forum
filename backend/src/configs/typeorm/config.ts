@@ -26,5 +26,5 @@ export const dataSourceOptions: DataSourceOptions = {
 export default new DataSource({
   ...dataSourceOptions,
   entities: ['src/entities/*/entity{.ts,.js}'],
-  migrations: ['src/migrations/*{.ts,.js}'],
+  migrations: ['src/migrations/scripts/*{.ts,.js}'],
 });

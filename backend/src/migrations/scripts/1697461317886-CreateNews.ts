@@ -1,24 +1,30 @@
 import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
-import { Locale } from '../apis/news/enum';
-import { DEFAULT_TIMESTAMP, TIMESTAMP_PRECISION } from '../entities/constant';
-import { LOCALE_ENUM_NAME, TABLE_NAME } from '../entities/news/constant';
+import {
+  DEFAULT_TIMESTAMP,
+  TIMESTAMP_PRECISION,
+} from '../../entities/constant';
+import {
+  CATEGORY_ENUM_NAME,
+  LOCALE_ENUM_NAME,
+  TABLE_NAME,
+} from '../../entities/news/constant';
 
-import { ExistsQuery } from './type';
+import { Category, Locale } from '../../entities/news/enum';
 
-export class CreateExchangeRate1697461317886 implements MigrationInterface {
-  public async up(queryRunner: QueryRunner): Promise<void> {
-    const [{ exists: doesLocaleEnumExist }]: ExistsQuery[] =
-      (await queryRunner.query(
-        `SELECT EXISTS(SELECT 1 FROM pg_type WHERE typname = '${LOCALE_ENUM_NAME}')`,
-      )) as ExistsQuery[];
-    if (doesLocaleEnumExist) {
-      await queryRunner.query(`DROP TYPE "${LOCALE_ENUM_NAME}"`);
-    }
-    await queryRunner.query(
-      `CREATE TYPE "${LOCALE_ENUM_NAME}" AS ENUM(${Object.values(Locale)
-        .map((locale: Locale) => `'${locale}'`)
-        .join(', ')})`,
+import { BaseMigration } from '../base.migration';
+import { DownResult, UpResult } from '../type';
+
+export class CreateNews1697461317886
+  extends BaseMigration
+  implements MigrationInterface
+{
+  public async up(queryRunner: QueryRunner): Promise<UpResult> {
+    await this.createEnum(queryRunner, LOCALE_ENUM_NAME, Object.values(Locale));
+    await this.createEnum(
+      queryRunner,
+      CATEGORY_ENUM_NAME,
+      Object.keys(Category),
     );
     await queryRunner.createTable(
       new Table({
@@ -36,15 +42,23 @@ export class CreateExchangeRate1697461317886 implements MigrationInterface {
             type: LOCALE_ENUM_NAME,
           },
           {
+            name: 'category',
+            type: CATEGORY_ENUM_NAME,
+          },
+          {
             name: 'guid',
-            type: 'varchar',
-            length: '255',
+            type: 'text',
             isUnique: true,
+          },
+          {
+            name: 'google_link',
+            type: 'text',
           },
           {
             name: 'link',
             type: 'varchar',
             length: '255',
+            isNullable: true,
             isUnique: true,
           },
           {
@@ -63,7 +77,7 @@ export class CreateExchangeRate1697461317886 implements MigrationInterface {
             length: '128',
           },
           {
-            name: 'is_description_retrieved',
+            name: 'is_metadata_retrieved',
             type: 'boolean',
             default: false,
           },
@@ -89,7 +103,7 @@ export class CreateExchangeRate1697461317886 implements MigrationInterface {
     );
   }
 
-  public async down(queryRunner: QueryRunner): Promise<void> {
+  public async down(queryRunner: QueryRunner): Promise<DownResult> {
     await queryRunner.dropTable(TABLE_NAME);
   }
 }
