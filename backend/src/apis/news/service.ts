@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import axios, { AxiosResponse } from 'axios';
-import { get, isEmpty, some } from 'lodash';
+import { every, get, isNil } from 'lodash';
 import { DateTime } from 'luxon';
 import { Repository } from 'typeorm';
 import { Parser } from 'xml2js';
@@ -111,6 +111,6 @@ export class NewsService {
   private isValidNewsItem(
     newsItem: ExtractNewsItemResult,
   ): IsValidNewsItemResult {
-    return !some(Object.values(newsItem), (value: string) => isEmpty(value));
+    return every(Object.values(newsItem), (value: string) => !isNil(value));
   }
 }
