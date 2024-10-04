@@ -8,9 +8,13 @@ import { PuppeteerModule } from '../../modules/puppeteer/module.js';
 
 import { NewsController } from './controller.js';
 import { NewsService } from './service.js';
+import { GoogleNewsEntity } from '../../entities/google-news/entity.js';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([NewsEntity]), PuppeteerModule],
+  imports: [
+    TypeOrmModule.forFeature([GoogleNewsEntity, NewsEntity]),
+    PuppeteerModule,
+  ],
   controllers: [NewsController],
   providers: [NewsService],
   exports: [NewsService],

@@ -12,7 +12,7 @@ import {
   InitializeResult,
   RunTestsResult,
 } from '../../../test/base/test-suite/type';
-import { DEFAULT_TTL_SECONDS, REDIS_PROVIDER_NAME } from '../redis/constant.js';
+import { DEFAULT_TTL_SECONDS, REDIS_PROVIDER_NAME } from './constant.js';
 
 import { RedisService } from './service';
 

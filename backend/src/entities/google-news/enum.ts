@@ -1,0 +1,15 @@
+export enum Locale {
+  ZH_TW = 'ZH_TW',
+}
+
+export enum Category {
+  BUSINESS = 'BUSINESS',
+  ENTERTAINMENT = 'ENTERTAINMENT',
+  SPOTS = 'SPOTS',
+  TECHNOLOGY = 'TECHNOLOGY',
+  FINANCE = 'FINANCE',
+  POLITICS = 'POLITICS',
+  HEALTH = 'HEALTH',
+  PET = 'PET',
+  GLOBAL = 'GLOBAL',
+}

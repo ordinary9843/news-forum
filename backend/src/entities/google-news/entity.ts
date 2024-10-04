@@ -9,48 +9,28 @@ import {
 
 import { TIMESTAMP_PRECISION, DEFAULT_TIMESTAMP } from '../constant.js';
 
-import {
-  CATEGORY_ENUM_NAME,
-  LOCALE_ENUM_NAME,
-  NEWS_TABLE,
-} from './constant.js';
-import { Category, Locale } from './enum.js';
+import { GOOGLE_NEWS_TABLE } from './constant.js';
 
-@Entity(NEWS_TABLE)
-export class NewsEntity {
+@Entity(GOOGLE_NEWS_TABLE)
+export class GoogleNewsEntity {
   @AfterLoad()
   setup(): void {}
 
   @PrimaryGeneratedColumn({ type: 'int' })
   id: number;
 
-  @Column({ type: 'enum', enumName: LOCALE_ENUM_NAME })
-  locale: Locale;
-
-  @Column({ type: 'enum', enumName: CATEGORY_ENUM_NAME })
-  category: Category;
-
   @Column({ type: 'text', unique: true })
   guid: string;
 
   @Column({ type: 'text', nullable: true })
-  link: string;
-
-  @Column({ type: 'varchar', length: 255 })
-  title: string;
-
-  @Column({ type: 'text', nullable: true })
-  description: string;
-
-  @Column({ type: 'varchar', length: 128 })
-  source: string;
+  html: string;
 
   @Column({
-    name: 'published_at',
-    type: 'timestamp',
-    precision: TIMESTAMP_PRECISION,
+    name: 'is_retrieved',
+    type: 'boolean',
+    default: false,
   })
-  publishedAt: Date;
+  isRetrieved: boolean;
 
   @CreateDateColumn({
     name: 'created_at',

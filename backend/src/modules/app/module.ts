@@ -1,21 +1,21 @@
-import { BullModule } from '@nestjs/bull';
 import { Module, NestModule } from '@nestjs/common';
 
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
-import { APP_GUARD } from '@nestjs/core';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { HttpExceptionFilter } from '../../filters/http-exception/filter.js';
-import { HttpResponseInterceptor } from '../../interceptors/http-response/interceptor.js';
-import { NewsModule } from '../../apis/news/module.js';
-import { JsonModule } from '../json/module.js';
-import { RedisModule } from '../redis/module.js';
-import { DateModule } from '../date/module.js';
 import { dataSourceOptions } from '../../configs/typeorm/config.js';
 import RedisConfig from '../../configs/redis/config.js';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
+import { DateModule } from '../date/module.js';
+import { JsonModule } from '../json/module.js';
+import { RedisModule } from '../redis/module.js';
+import { NewsModule } from '../../apis/news/module.js';
+import { HttpExceptionFilter } from '../../filters/http-exception/filter.js';
+import { HttpResponseInterceptor } from '../../interceptors/http-response/interceptor.js';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -44,7 +44,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
     TypeOrmModule.forRootAsync({
       useFactory: async () => ({
         ...dataSourceOptions,
-        entities: [__dirname + '/entities/*/entity{.ts,.js}'],
+        entities: [__dirname + '/entities/*/*.{.ts,.js}'],
         autoLoadEntities: true,
         synchronize: false,
       }),

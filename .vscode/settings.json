@@ -3,9 +3,9 @@
     "explorer.confirmDragAndDrop": false,
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
     "[typescript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
     },
     "[jsonc]": {
         "editor.defaultFormatter": "vscode.json-language-features"
@@ -25,6 +25,8 @@
     "eslint.format.enable": true,
     "docker.languageserver.formatter.ignoreMultilineInstructions": true,
     "typescript.updateImportsOnFileMove.enabled": "always",
+    "javascript.preferences.importModuleSpecifierEnding": "js",
+    "typescript.preferences.importModuleSpecifierEnding": "js",
     "cSpell.autoFormatConfigFile": true,
     "git.openRepositoryInParentFolders": "never"
 }

@@ -1,10 +1,10 @@
 import { Category } from './enum.js';
 
-export const TABLE_NAME: string = 'news';
+export const NEWS_TABLE: string = 'news';
 
-export const LOCALE_ENUM_NAME: string = `${TABLE_NAME}_locale_enum`;
+export const LOCALE_ENUM_NAME: string = `${NEWS_TABLE}_locale_enum`;
 
-export const CATEGORY_ENUM_NAME: string = `${TABLE_NAME}_category_enum`;
+export const CATEGORY_ENUM_NAME: string = `${NEWS_TABLE}_category_enum`;
 
 export const CATEGORY_MAPPING: Record<Category, string> = {
   [Category.BUSINESS]:

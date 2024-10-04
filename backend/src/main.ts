@@ -8,9 +8,12 @@ import { json } from 'express';
 import { HttpResponseInterceptor } from './interceptors/http-response/interceptor.js';
 import { AppModule } from './modules/app/module.js';
 import { HttpExceptionFilter } from './filters/http-exception/filter.js';
+import { ServerMode } from './modules/app/enum.js';
 
 const initSwagger = (app: NestExpressApplication) => {
-  if (process.env.SERVER_MODE === 'prod') return;
+  if (process.env.SERVER_MODE === ServerMode.PROD) {
+    return;
+  }
 
   SwaggerModule.setup(
     'api/docs',
@@ -20,7 +23,7 @@ const initSwagger = (app: NestExpressApplication) => {
       new DocumentBuilder()
         .addBearerAuth()
         .setTitle('News Forum')
-        .setDescription('News Forum API documentation')
+        .setDescription('API documentation')
         .setVersion('1.0')
         .build(),
     ),
