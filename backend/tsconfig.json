@@ -1,13 +1,16 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "ESNext",
+    "target": "ES6",
+    "moduleResolution": "node",
     "strict": true,
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "target": "es2017",
+    "allowImportingTsExtensions": false,
+    "noEmit": false,
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
@@ -18,7 +21,9 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
-    "resolveJsonModule": true,
-    "typeRoots": ["node_modules/@types", "./src/types"]
+    "typeRoots": [
+      "node_modules/@types",
+      "./src/types"
+    ]
   }
 }

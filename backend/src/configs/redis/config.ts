@@ -1,4 +1,4 @@
-import { Config } from '../abstract.config';
+import { Config } from '../abstract.config.js';
 
 export default new (class RedisConfig extends Config {
   constructor() {

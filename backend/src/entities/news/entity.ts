@@ -7,10 +7,14 @@ import {
   AfterLoad,
 } from 'typeorm';
 
-import { TIMESTAMP_PRECISION, DEFAULT_TIMESTAMP } from '../constant';
+import { TIMESTAMP_PRECISION, DEFAULT_TIMESTAMP } from '../constant.js';
 
-import { CATEGORY_ENUM_NAME, LOCALE_ENUM_NAME, TABLE_NAME } from './constant';
-import { Category, Locale } from './enum';
+import {
+  CATEGORY_ENUM_NAME,
+  LOCALE_ENUM_NAME,
+  TABLE_NAME,
+} from './constant.js';
+import { Category, Locale } from './enum.js';
 
 @Entity(TABLE_NAME)
 export class NewsEntity {

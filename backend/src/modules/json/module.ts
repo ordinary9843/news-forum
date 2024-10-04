@@ -1,6 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 
-import { JsonService } from './service';
+import { JsonService } from './service.js';
 
 @Global()
 @Module({

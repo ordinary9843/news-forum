@@ -3,17 +3,17 @@ import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 import {
   DEFAULT_TIMESTAMP,
   TIMESTAMP_PRECISION,
-} from '../../entities/constant';
+} from '../../entities/constant.js';
 import {
   CATEGORY_ENUM_NAME,
   LOCALE_ENUM_NAME,
   TABLE_NAME,
-} from '../../entities/news/constant';
+} from '../../entities/news/constant.js';
 
-import { Category, Locale } from '../../entities/news/enum';
+import { Category, Locale } from '../../entities/news/enum.js';
 
-import { BaseMigration } from '../base.migration';
-import { DownResult, UpResult } from '../type';
+import { BaseMigration } from '../base.migration.js';
+import { DownResult, UpResult } from '../type.js';
 
 export class CreateNews1697461317886
   extends BaseMigration

@@ -1,6 +1,6 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 
-import { Config } from '../abstract.config';
+import { Config } from '../abstract.config.js';
 
 class TypeOrmConfig extends Config {
   constructor() {

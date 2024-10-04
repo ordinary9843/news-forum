@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { map } from 'lodash';
 import { QueryRunner } from 'typeorm';
 
-import { ExistsQuery } from './type';
+import { ExistsQuery } from './type.js';
 
 @Injectable()
 export class BaseMigration {

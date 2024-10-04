@@ -1,18 +1,22 @@
+import { promises as fs } from 'fs';
+import { inspect } from 'util';
+
+import { extractFromHtml } from '@extractus/article-extractor';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import axios, { AxiosResponse } from 'axios';
-import { every, get, isNil } from 'lodash';
 import { DateTime } from 'luxon';
 import { Repository } from 'typeorm';
 import { Parser } from 'xml2js';
 
-import { CATEGORY_MAPPING } from '../../entities/news/constant';
-import { NewsEntity } from '../../entities/news/entity';
-import { Category, Locale } from '../../entities/news/enum';
+import { NewsEntity } from '../../entities/news/entity.js';
+import { Category, Locale } from '../../entities/news/enum.js';
 
-import { RSS_URL } from './constant';
-import { LocaleQuery } from './enum';
+import { PuppeteerService } from '../../modules/puppeteer/service.js';
+
+import { RSS_URL } from './constant.js';
+import { LocaleQuery } from './enum.js';
 import {
   DemoResponse,
   DoesNewsExistResult,
@@ -23,7 +27,9 @@ import {
   GoogleNewsItem,
   RssFeed,
   SaveGoogleNewsResult,
-} from './type';
+} from './type.js';
+import { CATEGORY_MAPPING } from '../../entities/news/constant.js';
+import _ from 'lodash';
 
 @Injectable()
 export class NewsService {
@@ -32,10 +38,50 @@ export class NewsService {
   constructor(
     @InjectRepository(NewsEntity)
     readonly newsRepository: Repository<NewsEntity>,
+    private readonly puppeteerService: PuppeteerService,
   ) {}
 
   async demo(): Promise<DemoResponse> {
-    await this.saveGoogleNews();
+    try {
+      // const url: string =
+      //   'https://news.google.com/rss/articles/CBMiX0FVX3lxTE9BS3ZLSUd5R3BRT25XZkJ2ZGphZWdBbEtiY3lHd1ZubVpnRkNGZG40RHE1YnJDcWtuckJMZS1pNktMNGszNEl3TlRkbkNtaGk2MkFIVUs4SjF1VWoyd1RN?oc=5';
+      // const {
+      //   page,
+      // }: {
+      //   page: Page;
+      // } = await this.puppeteerService.openBrowserPage();
+      // this.logger.verbose(
+      //   `getCapturedRequest(): Prepare request post data (threadsUrl=${url}})`,
+      // );
+      // await page.goto(url, { waitUntil: 'networkidle0' });
+      // const finalUrl: string = page.url();
+      // console.log(`Final URL: ${finalUrl}`);
+
+      // const htmlContent: string = await page.content();
+      // console.log(`HTML Content: ${htmlContent}`);
+
+      const filePath: string = 'output.html'; // 指定檔案名稱
+      // await fs.writeFile(filePath, htmlContent);
+      // console.log(`HTML content saved to ${filePath}`);
+
+      // 使用 Readability 讀取檔案
+      const fileData: any = await fs.readFile(filePath, 'utf-8');
+      const article: any = await extractFromHtml(fileData);
+      console.log(article);
+      // const dom: JSDOM = new JSDOM(fileData);
+      // const article: any = new Readability(dom.window.document).parse();
+
+      // console.log('Article Title:', article.title);
+      // console.log('Article Content:', article.content);
+      // await this.puppeteerService.closePage(page);
+    } catch (error) {
+      this.logger.error(
+        `getCapturedRequest(): Capture request failed (error=${inspect(
+          error,
+        )})`,
+      );
+    }
+    // await this.saveGoogleNews();
   }
 
   @Cron('*/5 * * * *')
@@ -102,21 +148,21 @@ export class NewsService {
     feedItem: FeedItem,
   ): ExtractGoogleNewsItemResult {
     return {
-      guid: get(feedItem, 'guid.0._'),
-      link: get(feedItem, 'link.0'),
-      title: get(feedItem, 'title.0'),
-      description: get(feedItem, 'description.0'),
-      source: get(feedItem, 'source.0._'),
-      pubDate: DateTime.fromHTTP(get(feedItem, 'pubDate.0')).toJSDate(),
+      guid: _.get(feedItem, 'guid.0._'),
+      link: _.get(feedItem, 'link.0'),
+      title: _.get(feedItem, 'title.0'),
+      description: _.get(feedItem, 'description.0'),
+      source: _.get(feedItem, 'source.0._'),
+      pubDate: DateTime.fromHTTP(_.get(feedItem, 'pubDate.0')).toJSDate(),
     };
   }
 
   private isValidGoogleNewsItem(
     googleNewsItem: ExtractGoogleNewsItemResult,
   ): IsValidGoogleNewsItemResult {
-    return every(
+    return _.every(
       Object.values(googleNewsItem),
-      (value: string) => !isNil(value),
+      (value: string) => !_.isNil(value),
     );
   }
 }

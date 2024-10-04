@@ -6,17 +6,18 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { HttpExceptionFilter } from '../../filters/http-exception/filter.js';
+import { HttpResponseInterceptor } from '../../interceptors/http-response/interceptor.js';
+import { NewsModule } from '../../apis/news/module.js';
+import { JsonModule } from '../json/module.js';
+import { RedisModule } from '../redis/module.js';
+import { DateModule } from '../date/module.js';
+import { dataSourceOptions } from '../../configs/typeorm/config.js';
+import RedisConfig from '../../configs/redis/config.js';
 
-import { NewsModule } from 'src/apis/news/module';
-
-import Configs from '../../configs';
-import { dataSourceOptions } from '../../configs/typeorm/config';
-import { HttpExceptionFilter } from '../../filters/http-exception/filter';
-import { HttpResponseInterceptor } from '../../interceptors/http-response/interceptor';
-
-import { DateModule } from '../date/module';
-import { JsonModule } from '../json/module';
-import { RedisModule } from '../redis/module';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 @Module({
   imports: [
@@ -34,7 +35,7 @@ import { RedisModule } from '../redis/module';
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
-      load: Configs,
+      load: [RedisConfig],
     }),
     DateModule,
     NewsModule,

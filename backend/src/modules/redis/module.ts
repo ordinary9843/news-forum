@@ -3,8 +3,8 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Redis } from 'ioredis';
 
-import { REDIS_PROVIDER_NAME } from './constant';
-import { RedisService } from './service';
+import { REDIS_PROVIDER_NAME } from './constant.js';
+import { RedisService } from './service.js';
 
 @Global()
 @Module({

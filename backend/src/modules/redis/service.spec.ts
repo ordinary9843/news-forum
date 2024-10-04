@@ -7,12 +7,12 @@ import Redis from 'ioredis';
 
 import { BaseTestSuite } from '../../../test/base/test-suite/abstract.test.suite';
 
-import { MOCK_REDIS_CLIENT } from '../../../test/base/test-suite/constants';
+import { MOCK_REDIS_CLIENT } from '../../../test/base/test-suite/constants.js';
 import {
   InitializeResult,
   RunTestsResult,
 } from '../../../test/base/test-suite/type';
-import { DEFAULT_TTL_SECONDS, REDIS_PROVIDER_NAME } from '../redis/constant';
+import { DEFAULT_TTL_SECONDS, REDIS_PROVIDER_NAME } from '../redis/constant.js';
 
 import { RedisService } from './service';
 

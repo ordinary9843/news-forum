@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Redis } from 'ioredis';
 
-import { DEFAULT_TTL_SECONDS, REDIS_PROVIDER_NAME } from './constant';
-import { DelResult, ExistsResult, GetResult, SetResult } from './type';
+import { DEFAULT_TTL_SECONDS, REDIS_PROVIDER_NAME } from './constant.js';
+import { DelResult, ExistsResult, GetResult, SetResult } from './type.js';
 
 @Injectable()
 export class RedisService {

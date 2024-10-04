@@ -6,8 +6,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
-
-import { isArray } from 'lodash';
+import _ from 'lodash';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -44,7 +43,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       const response: string | object = exception.getResponse();
       if (typeof response === 'object' && 'message' in response) {
-        message = isArray(response.message)
+        message = _.isArray(response.message)
           ? (response.message.shift() as string)
           : (response.message as string);
       }

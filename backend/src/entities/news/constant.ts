@@ -1,4 +1,4 @@
-import { Category } from './enum';
+import { Category } from './enum.js';
 
 export const TABLE_NAME: string = 'news';
 
