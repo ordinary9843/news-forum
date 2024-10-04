@@ -33,7 +33,7 @@ export type RssFeed = {
   };
 };
 
-export type NewsItem = {
+export type GoogleNewsItem = {
   guid: string;
   link: string;
   title: string;
@@ -44,12 +44,12 @@ export type NewsItem = {
 
 export type DemoResponse = void;
 
-export type SaveNewsResult = void;
+export type SaveGoogleNewsResult = void;
 
-export type FetchNewsResult = RssFeed;
+export type FetchGoogleNewsResult = RssFeed;
 
 export type DoesNewsExistResult = boolean;
 
-export type ExtractNewsItemResult = NewsItem;
+export type ExtractGoogleNewsItemResult = GoogleNewsItem;
 
-export type IsValidNewsItemResult = boolean;
+export type IsValidGoogleNewsItemResult = boolean;

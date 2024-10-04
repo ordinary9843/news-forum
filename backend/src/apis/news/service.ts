@@ -16,13 +16,13 @@ import { LocaleQuery } from './enum';
 import {
   DemoResponse,
   DoesNewsExistResult,
-  ExtractNewsItemResult,
+  ExtractGoogleNewsItemResult,
   FeedItem,
-  FetchNewsResult,
-  IsValidNewsItemResult,
-  NewsItem,
+  FetchGoogleNewsResult,
+  IsValidGoogleNewsItemResult,
+  GoogleNewsItem,
   RssFeed,
-  SaveNewsResult,
+  SaveGoogleNewsResult,
 } from './type';
 
 @Injectable()
@@ -35,28 +35,29 @@ export class NewsService {
   ) {}
 
   async demo(): Promise<DemoResponse> {
-    await this.saveNews();
+    await this.saveGoogleNews();
   }
 
   @Cron('*/5 * * * *')
-  async saveNews(): Promise<SaveNewsResult> {
+  async saveGoogleNews(): Promise<SaveGoogleNewsResult> {
     const categories: Category[] = Object.values(Category) as Category[];
     for (const category of categories) {
       for (const locale of Object.values(Locale)) {
         try {
-          const rssFeed: RssFeed = await this.fetchNews(locale, category);
+          const rssFeed: RssFeed = await this.fetchGoogleNews(locale, category);
           for (const channel of rssFeed.rss.channel) {
             for (const item of channel.item) {
-              const newsItem: NewsItem = this.extractNewsItem(item);
-              const { guid, link, title, source, pubDate }: NewsItem = newsItem;
-              if (!this.isValidNewsItem(newsItem)) {
+              const googleNewsItem: GoogleNewsItem =
+                this.extractGoogleNewsItem(item);
+              const { guid, link, title, source, pubDate }: GoogleNewsItem =
+                googleNewsItem;
+              if (!this.isValidGoogleNewsItem(googleNewsItem)) {
                 this.logger.warn(`Skipping invalid news "${title}"`);
                 continue;
               } else if (await this.doesNewsExist(guid)) {
                 this.logger.warn(`News "${title}" already exists`);
                 continue;
               }
-
               await this.newsRepository.save(
                 this.newsRepository.create({
                   locale,
@@ -78,10 +79,10 @@ export class NewsService {
     }
   }
 
-  private async fetchNews(
+  private async fetchGoogleNews(
     locale: Locale,
     category: Category,
-  ): Promise<FetchNewsResult> {
+  ): Promise<FetchGoogleNewsResult> {
     const url: string = `${RSS_URL}/topics/${CATEGORY_MAPPING[category]}?${LocaleQuery[locale]}`;
     const response: AxiosResponse = await axios.get(url);
     const parser: Parser = new Parser();
@@ -97,7 +98,9 @@ export class NewsService {
     );
   }
 
-  private extractNewsItem(feedItem: FeedItem): ExtractNewsItemResult {
+  private extractGoogleNewsItem(
+    feedItem: FeedItem,
+  ): ExtractGoogleNewsItemResult {
     return {
       guid: get(feedItem, 'guid.0._'),
       link: get(feedItem, 'link.0'),
@@ -108,9 +111,12 @@ export class NewsService {
     };
   }
 
-  private isValidNewsItem(
-    newsItem: ExtractNewsItemResult,
-  ): IsValidNewsItemResult {
-    return every(Object.values(newsItem), (value: string) => !isNil(value));
+  private isValidGoogleNewsItem(
+    googleNewsItem: ExtractGoogleNewsItemResult,
+  ): IsValidGoogleNewsItemResult {
+    return every(
+      Object.values(googleNewsItem),
+      (value: string) => !isNil(value),
+    );
   }
 }
