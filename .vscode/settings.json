@@ -25,8 +25,11 @@
     "eslint.format.enable": true,
     "docker.languageserver.formatter.ignoreMultilineInstructions": true,
     "typescript.updateImportsOnFileMove.enabled": "always",
-    "javascript.preferences.importModuleSpecifierEnding": "js",
     "typescript.preferences.importModuleSpecifierEnding": "js",
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "javascript.preferences.importModuleSpecifierEnding": "js",
+    "javascript.preferences.importModuleSpecifier": "relative",
     "cSpell.autoFormatConfigFile": true,
     "git.openRepositoryInParentFolders": "never"
 }

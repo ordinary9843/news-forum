@@ -5,8 +5,8 @@ import {
   TIMESTAMP_PRECISION,
 } from '../../entities/constant.js';
 
-import { DownResult, UpResult } from '../type.js';
 import { GOOGLE_NEWS_TABLE } from '../../entities/google-news/constant.js';
+import { DownResult, UpResult } from '../type.js';
 
 export default class CreateGoogleNews1697461317886
   implements MigrationInterface

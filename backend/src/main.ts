@@ -5,10 +5,10 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { json } from 'express';
 
-import { HttpResponseInterceptor } from './interceptors/http-response/interceptor.js';
-import { AppModule } from './modules/app/module.js';
 import { HttpExceptionFilter } from './filters/http-exception/filter.js';
+import { HttpResponseInterceptor } from './interceptors/http-response/interceptor.js';
 import { ServerMode } from './modules/app/enum.js';
+import { AppModule } from './modules/app/module.js';
 
 const initSwagger = (app: NestExpressApplication) => {
   if (process.env.SERVER_MODE === ServerMode.PROD) {

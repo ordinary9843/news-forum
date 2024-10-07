@@ -1,8 +1,10 @@
+import path, { dirname } from 'path';
+
+import { fileURLToPath } from 'url';
+
 import { DataSource, DataSourceOptions } from 'typeorm';
 
 import { Config } from '../abstract.config.js';
-import path, { dirname } from 'path';
-import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

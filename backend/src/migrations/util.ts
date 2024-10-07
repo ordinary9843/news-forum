@@ -1,5 +1,6 @@
-import { QueryRunner } from 'typeorm';
 import _ from 'lodash';
+import { QueryRunner } from 'typeorm';
+
 import { ExistsQuery } from './type.js';
 
 export async function createEnum(
