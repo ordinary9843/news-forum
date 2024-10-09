@@ -29,14 +29,18 @@ export default class CreateGoogleNews1697461317886
             isUnique: true,
           },
           {
+            name: 'link',
+            type: 'text',
+          },
+          {
             name: 'html',
             type: 'text',
             isNullable: true,
           },
           {
-            name: 'is_retrieved',
-            type: 'boolean',
-            default: false,
+            name: 'retrieve_count',
+            type: 'int',
+            default: 0,
           },
           {
             name: 'created_at',
@@ -49,6 +53,12 @@ export default class CreateGoogleNews1697461317886
             type: 'timestamp',
             precision: TIMESTAMP_PRECISION,
             default: DEFAULT_TIMESTAMP,
+          },
+        ],
+        indices: [
+          {
+            name: 'html:retrieve_count',
+            columnNames: ['html', 'retrieve_count'],
           },
         ],
       }),

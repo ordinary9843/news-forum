@@ -26,8 +26,6 @@ export type CloseBrowserResult = void;
 
 export type ClosePageResult = void;
 
-export type ExtractRequestResult = CapturedRequest;
-
 export type GetBrowserResult = Browser | null;
 
 export type GetAvailableBrowserResult = Browser;

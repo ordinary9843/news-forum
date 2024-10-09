@@ -3,10 +3,10 @@ import { inspect } from 'util';
 
 import { Injectable, Logger } from '@nestjs/common';
 import { Mutex, MutexInterface } from 'async-mutex';
-import * as BluebirdPromise from 'bluebird';
+import Bluebird from 'bluebird';
 import _ from 'lodash';
 import { DateTime } from 'luxon';
-import puppeteer, { Browser, HTTPRequest, Page } from 'puppeteer';
+import puppeteer, { Browser, Page } from 'puppeteer';
 
 import {
   BROWSER_EXPIRED_MILLISECONDS,
@@ -20,7 +20,6 @@ import {
   CloseAllBrowsersResult,
   CreateBrowserResult,
   DeleteExpiredBrowsersResult,
-  ExtractRequestResult,
   GetBrowserResult,
   MarkBrowserExpiredResult,
   ShouldCreateBrowserResult,
@@ -62,6 +61,18 @@ export class PuppeteerService {
         );
       }
       page = await browser.newPage();
+      await page.setRequestInterception(true);
+      page.on('request', (request) => {
+        if (
+          request.resourceType() === 'document' ||
+          request.resourceType() === 'xhr' ||
+          request.resourceType() === 'script'
+        ) {
+          request.continue();
+        } else {
+          request.abort();
+        }
+      });
       await page.setExtraHTTPHeaders({
         'Sec-Ch-Ua':
           '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
@@ -70,7 +81,6 @@ export class PuppeteerService {
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
       });
-      // await page.setRequestInterception(true);
     } catch (error) {
       this.logger.error(
         `openBrowserPage(): Current browser status (error=${inspect(error)})`,
@@ -164,14 +174,6 @@ export class PuppeteerService {
     }
   }
 
-  extractRequest(request: HTTPRequest): ExtractRequestResult {
-    return {
-      url: request.url(),
-      headers: request.headers(),
-      payload: request.postData(),
-    };
-  }
-
   private async getBrowser(): Promise<GetBrowserResult> {
     const browser: Browser = (await this.shouldCreateBrowser())
       ? await this.createBrowser()
@@ -259,7 +261,7 @@ export class PuppeteerService {
 
   private async deleteExpiredBrowsers(): Promise<DeleteExpiredBrowsersResult> {
     const now: number = DateTime.now().toMillis();
-    await BluebirdPromise.each(
+    await Bluebird.each(
       this.browsers,
       async ([browser, { expiredAt = 0 }]: [Browser, BrowserStatus]) => {
         if (expiredAt > 0 && expiredAt <= now) {
@@ -272,12 +274,9 @@ export class PuppeteerService {
   private async closeAllBrowsers(): Promise<CloseAllBrowsersResult> {
     this.logger.verbose('closeAllBrowsers:() Prepare delete all browsers');
     while (this.browsers.size > 0) {
-      await BluebirdPromise.each(
-        this.browsers.keys(),
-        async (browser: Browser) => {
-          await this.closeBrowser(browser);
-        },
-      );
+      await Bluebird.each(this.browsers.keys(), async (browser: Browser) => {
+        await this.closeBrowser(browser);
+      });
     }
     this.logger.log('closeAllBrowsers:() Deleted all browsers successfully');
   }
@@ -285,7 +284,7 @@ export class PuppeteerService {
   private async closeAllPages(browser: Browser): Promise<CloseAllPagesResult> {
     try {
       const pages: Page[] = await browser.pages();
-      await BluebirdPromise.map(
+      await Bluebird.map(
         pages,
         async (page: Page) => await this.closePage(page),
       );

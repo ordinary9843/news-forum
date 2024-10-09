@@ -1,57 +1,35 @@
-export type FeedGuid = {
-  _: string;
-  $: {
-    isPermaLink: string;
-  };
+import { NewsEntity } from '../../entities/news/entity.js';
+import { Category, Locale } from '../../entities/news/enum.js';
+
+export type NewsItem = {
+  locale: Locale;
+  category: Category;
+  guid: string;
+  link: string;
+  title: string;
+  description: string | null;
+  source: string;
+  publishedAt: Date;
 };
 
-export type FeedSource = {
-  _: string;
-  $: {
-    url: string;
-  };
-};
-
-export type FeedItem = {
-  title: string[];
-  link: string[];
-  guid: FeedGuid[];
-  pubDate: string[];
-  description: string[];
-  source: FeedSource[];
-};
-
-export type FeedChannel = {
-  title: string[];
-  description: string[];
-  item: FeedItem[];
-};
-
-export type RssFeed = {
-  rss: {
-    channel: FeedChannel[];
-  };
-};
-
-export type GoogleNewsItem = {
+export type CreateNewsParams = {
+  locale: Locale;
+  category: Category;
   guid: string;
   link: string;
   title: string;
   description: string;
   source: string;
-  pubDate: Date;
+  publishedAt: Date;
 };
 
-export type DemoResponse = void;
+export type UpdateNewsByGuidParams = {
+  link?: string | null;
+  description?: string | null;
+};
 
-export type SaveGoogleNewsResult = void;
+export type CreateNewsResult = NewsEntity;
 
-export type FetchGoogleNewsResult = RssFeed;
+export type UpdateNewsByGuidResult = NewsEntity;
 
 export type DoesNewsExistResult = boolean;
-
-export type ExtractGoogleNewsItemResult = GoogleNewsItem;
-
-export type IsValidGoogleNewsItemResult = boolean;
-
-export type SummarizeArticleResult = string;

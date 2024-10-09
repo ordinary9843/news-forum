@@ -23,14 +23,17 @@ export class GoogleNewsEntity {
   guid: string;
 
   @Column({ type: 'text', nullable: true })
+  link: string;
+
+  @Column({ type: 'text', nullable: true })
   html: string;
 
   @Column({
-    name: 'is_retrieved',
-    type: 'boolean',
-    default: false,
+    name: 'retrieve_count',
+    type: 'int',
+    default: 0,
   })
-  isRetrieved: boolean;
+  retrieveCount: number;
 
   @CreateDateColumn({
     name: 'created_at',
