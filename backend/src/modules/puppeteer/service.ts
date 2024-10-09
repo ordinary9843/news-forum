@@ -1,4 +1,3 @@
-import { ChildProcess } from 'child_process';
 import { inspect } from 'util';
 
 import { Injectable, Logger } from '@nestjs/common';
@@ -114,8 +113,8 @@ export class PuppeteerService {
       this.logger.log('closeBrowser(): Browser process killed successfully');
     } catch (error) {
       if (_.has(browser, 'process')) {
-        const process: ChildProcess = browser.process();
-        const killRes: boolean = process.kill('SIGKILL');
+        const process = browser.process();
+        const killRes = process.kill('SIGKILL');
         if (killRes) {
           this.browsers.delete(browser);
           this.logger.log(
@@ -175,14 +174,14 @@ export class PuppeteerService {
   }
 
   private async getBrowser(): Promise<GetBrowserResult> {
-    const browser: Browser = (await this.shouldCreateBrowser())
+    const browser = (await this.shouldCreateBrowser())
       ? await this.createBrowser()
       : await this.getAvailableBrowser();
     if (_.isEmpty(browser)) {
       return null;
     }
 
-    const { usageCount }: BrowserStatus = this.browsers.get(browser);
+    const { usageCount } = this.browsers.get(browser);
     this.browsers.set(browser, {
       usageCount: usageCount + 1,
     });
@@ -212,8 +211,9 @@ export class PuppeteerService {
   }
 
   private async createBrowser(): Promise<CreateBrowserResult> {
-    const browser: Browser = await puppeteer.launch({
+    const browser = await puppeteer.launch({
       headless: false,
+      timeout: 60000,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -249,7 +249,7 @@ export class PuppeteerService {
   }
 
   private markBrowserExpired(browser: Browser): MarkBrowserExpiredResult {
-    const { usageCount }: BrowserStatus = this.browsers.get(browser);
+    const { usageCount } = this.browsers.get(browser);
     this.browsers.set(browser, {
       usageCount,
       expiredAt: DateTime.now().toMillis() + BROWSER_EXPIRED_MILLISECONDS,
@@ -283,7 +283,7 @@ export class PuppeteerService {
 
   private async closeAllPages(browser: Browser): Promise<CloseAllPagesResult> {
     try {
-      const pages: Page[] = await browser.pages();
+      const pages = await browser.pages();
       await Bluebird.map(
         pages,
         async (page: Page) => await this.closePage(page),
