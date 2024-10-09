@@ -3,9 +3,11 @@ import { inspect } from 'util';
 
 import { Injectable, Logger } from '@nestjs/common';
 import { Mutex, MutexInterface } from 'async-mutex';
+import * as BluebirdPromise from 'bluebird';
+import _ from 'lodash';
 import { DateTime } from 'luxon';
 import puppeteer, { Browser, HTTPRequest, Page } from 'puppeteer';
-import * as BluebirdPromise from 'bluebird';
+
 import {
   BROWSER_EXPIRED_MILLISECONDS,
   CLOSE_BROWSER_RETRY_COUNT,
@@ -29,7 +31,6 @@ import {
   CloseBrowserResult,
   ClosePageResult,
 } from './type.js';
-import _ from 'lodash';
 
 @Injectable()
 export class PuppeteerService {

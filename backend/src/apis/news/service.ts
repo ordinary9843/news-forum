@@ -1,10 +1,16 @@
-import { extractFromHtml } from '@extractus/article-extractor';
+import * as fs from 'fs/promises';
+
+import { inspect } from 'util';
+
+import { ArticleData, extractFromHtml } from '@extractus/article-extractor';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import axios, { AxiosResponse } from 'axios';
+import { convert } from 'html-to-text';
 import _ from 'lodash';
 import { DateTime } from 'luxon';
+import { Page } from 'puppeteer';
 import { Repository } from 'typeorm';
 import { Parser } from 'xml2js';
 
@@ -16,7 +22,6 @@ import { PuppeteerService } from '../../modules/puppeteer/service.js';
 
 import { RSS_URL } from './constant.js';
 import { LocaleQuery } from './enum.js';
-
 import {
   DemoResponse,
   DoesNewsExistResult,
@@ -27,6 +32,7 @@ import {
   GoogleNewsItem,
   RssFeed,
   SaveGoogleNewsResult,
+  SummarizeArticleResult,
 } from './type.js';
 
 @Injectable()
@@ -42,42 +48,33 @@ export class NewsService {
   ) {}
 
   async demo(): Promise<DemoResponse> {
-    // try {
-    //   // const url: string =
-    //   //   'https://news.google.com/rss/articles/CBMiX0FVX3lxTE9BS3ZLSUd5R3BRT25XZkJ2ZGphZWdBbEtiY3lHd1ZubVpnRkNGZG40RHE1YnJDcWtuckJMZS1pNktMNGszNEl3TlRkbkNtaGk2MkFIVUs4SjF1VWoyd1RN?oc=5';
-    //   // const {
-    //   //   page,
-    //   // }: {
-    //   //   page: Page;
-    //   // } = await this.puppeteerService.openBrowserPage();
-    //   // this.logger.verbose(
-    //   //   `getCapturedRequest(): Prepare request post data (threadsUrl=${url}})`,
-    //   // );
-    //   // await page.goto(url, { waitUntil: 'networkidle0' });
-    //   // const finalUrl: string = page.url();
-    //   // console.log(`Final URL: ${finalUrl}`);
-    //   // const htmlContent: string = await page.content();
-    //   // console.log(`HTML Content: ${htmlContent}`);
-    //   const filePath: string = 'output.html'; // 指定檔案名稱
-    //   // await fs.writeFile(filePath, htmlContent);
-    //   // console.log(`HTML content saved to ${filePath}`);
-    //   // 使用 Readability 讀取檔案
-    //   const fileData: any = await fs.readFile(filePath, 'utf-8');
-    //   const article: any = await extractFromHtml(fileData);
-    //   console.log(article);
-    //   // const dom: JSDOM = new JSDOM(fileData);
-    //   // const article: any = new Readability(dom.window.document).parse();
-    //   // console.log('Article Title:', article.title);
-    //   // console.log('Article Content:', article.content);
-    //   // await this.puppeteerService.closePage(page);
-    // } catch (error) {
-    //   this.logger.error(
-    //     `getCapturedRequest(): Capture request failed (error=${inspect(
-    //       error,
-    //     )})`,
-    //   );
-    // }
-    await this.saveGoogleNews();
+    try {
+      // const url: string =
+      //   'https://news.google.com/rss/articles/CBMiX0FVX3lxTE9BS3ZLSUd5R3BRT25XZkJ2ZGphZWdBbEtiY3lHd1ZubVpnRkNGZG40RHE1YnJDcWtuckJMZS1pNktMNGszNEl3TlRkbkNtaGk2MkFIVUs4SjF1VWoyd1RN?oc=5';
+      // const {
+      //   page,
+      // }: {
+      //   page: Page;
+      // } = await this.puppeteerService.openBrowserPage();
+      // this.logger.verbose(
+      //   `getCapturedRequest(): Prepare request post data (threadsUrl=${url}})`,
+      // );
+      // await page.goto(url, { waitUntil: 'networkidle0' });
+      // const finalUrl: string = page.url();
+      // const htmlContent: string = await page.content();
+      const filePath: string = 'output.html';
+      const fileData: string = await fs.readFile(filePath, 'utf-8');
+      const summary: string = await this.summarizeArticle(fileData);
+      console.log(summary);
+      // await this.puppeteerService.closePage(page);
+    } catch (error) {
+      this.logger.error(
+        `getCapturedRequest(): Capture request failed (error=${inspect(
+          error,
+        )})`,
+      );
+    }
+    // await this.saveGoogleNews();
   }
 
   @Cron('*/5 * * * *')
@@ -132,6 +129,14 @@ export class NewsService {
     }
   }
 
+  async doesNewsExist(guid: string): Promise<DoesNewsExistResult> {
+    return (
+      (await this.newsRepository.count({
+        where: { guid },
+      })) > 0
+    );
+  }
+
   private async fetchGoogleNews(
     locale: Locale,
     category: Category,
@@ -141,14 +146,6 @@ export class NewsService {
     const parser: Parser = new Parser();
 
     return await parser.parseStringPromise(response.data);
-  }
-
-  async doesNewsExist(guid: string): Promise<DoesNewsExistResult> {
-    return (
-      (await this.newsRepository.count({
-        where: { guid },
-      })) > 0
-    );
   }
 
   private extractGoogleNewsItem(
@@ -171,5 +168,27 @@ export class NewsService {
       Object.values(googleNewsItem),
       (value: string) => !_.isNil(value),
     );
+  }
+
+  private async summarizeArticle(
+    html: string,
+  ): Promise<SummarizeArticleResult> {
+    const article: ArticleData = await extractFromHtml(html);
+    const options = {
+      selectors: [
+        { selector: 'a', options: { ignoreHref: true } },
+        { selector: 'img', format: 'skip' },
+        { selector: 'h1', options: { uppercase: false } },
+        { selector: 'h2', options: { uppercase: false } },
+        { selector: 'h3', options: { uppercase: false } },
+        { selector: 'h4', options: { uppercase: false } },
+        { selector: 'h5', options: { uppercase: false } },
+        { selector: 'h6', options: { uppercase: false } },
+      ],
+      wordwrap: false,
+      preserveNewlines: true,
+    };
+
+    return _.trim(_.replace(convert(article.content, options), /\s+/g, ' '));
   }
 }

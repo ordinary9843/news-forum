@@ -53,3 +53,5 @@ export type DoesNewsExistResult = boolean;
 export type ExtractGoogleNewsItemResult = GoogleNewsItem;
 
 export type IsValidGoogleNewsItemResult = boolean;
+
+export type SummarizeArticleResult = string;
