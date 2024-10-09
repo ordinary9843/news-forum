@@ -1,9 +1,17 @@
 # 新聞民意廣場
 
 ## 專案摘要
+
 本專案旨在蒐集大量新聞資料，並為使用者提供特定選項以便進行投票。透過這個平台，我們希望能夠促進公眾對當前事件的參與和互動，收集社會對各種新聞事件的意見和情感反應。用戶可以針對不同的新聞事件進行投票，並選擇適合的選項，反映他們的觀點和態度。
 
-## Build Setup
+### Frontend
+
+- Node.js: 14.21.3
+- Nuxt: 2.15.8
+- Ant-design-vue: 1.7.8
+- Nuxt-i18n: 6.28.1
+
+## Build in localhost
 
 ```bash
 # install dependencies
@@ -14,15 +22,25 @@ $ npm run dev
 
 # build for production and launch server
 $ npm run build
-$ npm run start
 
-# generate static project
-$ npm run generate
 ```
 
-For detailed explanation on how things work, check out the [documentation](https://nuxtjs.org).
+## Build Code and Launch to Server
 
-## Special Directories
+```bash
+# install dependencies
+$ npm install
+
+# build for production and launch server
+$ npm run build
+
+# the build code will be located in /dist
+
+```
+
+## Nuxt Special Directories
+
+For detailed explanation on how things work, check out the [documentation](https://nuxtjs.org).
 
 You can create the following extra directories, some of which have special behaviors. Only `pages` is required; you can delete them if you don't want to use their functionality.
 
