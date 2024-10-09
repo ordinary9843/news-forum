@@ -40,7 +40,7 @@ import {
   CreateGoogleNewsResult,
   CreateGoogleNewsParams,
   UpdateGoogleNewsParams,
-  RetrieveAndProcessArticlesResult,
+  SaveArticlesResult,
 } from './type.js';
 
 @Injectable()
@@ -57,7 +57,7 @@ export class GoogleNewsService {
 
   async onApplicationBootstrap() {
     // await this.saveGoogleNews();
-    await this.retrieveAndProcessArticles();
+    await this.saveArticles();
   }
 
   async createGoogleNews(
@@ -148,25 +148,25 @@ export class GoogleNewsService {
     await queryRunner.release();
   }
 
-  @Cron('*/5 * * * *')
-  async retrieveAndProcessArticles(): Promise<RetrieveAndProcessArticlesResult> {
+  @Cron('*/3 * * * *')
+  async saveArticles(): Promise<SaveArticlesResult> {
     const pendingRetrievalGoogleNews =
       await this.getPendingRetrievalGoogleNews();
-    this.logger.verbose(
-      `retrieveAndProcessArticle(): Has ${pendingRetrievalGoogleNews.length} pending retrieval google news`,
-    );
     for (const googleNews of pendingRetrievalGoogleNews) {
       let page = null;
       let id = null;
       try {
         const { id: googleNewsId, guid, link } = googleNews;
+        this.logger.verbose(
+          `retrieveAndProcessArticle(): Prepare retrieve article "${link}"`,
+        );
+
         page = await this.puppeteerService.openPage();
         id = googleNewsId;
-        await page.goto(link, { waitUntil: 'networkidle0' });
+        await page.goto(link, { waitUntil: 'networkidle2' });
         const finalUrl = page.url();
         const html = await page.content();
         const summary = await this.summarizeArticle(html);
-        console.log(summary);
         if (!finalUrl || !summary) {
           throw new BadRequestException(`Failed to retrieve article`);
         }
@@ -189,6 +189,14 @@ export class GoogleNewsService {
         await this.updateGoogleNews(id, {
           retrieveCount: googleNews.retrieveCount + 1,
         });
+      } finally {
+        if (page) {
+          await this.puppeteerService.closePage(page).catch((error) => {
+            this.logger.error(
+              `retrieveAndProcessArticle: Failed to close page (error=${inspect(error)})`,
+            );
+          });
+        }
       }
     }
   }

@@ -1,7 +1,7 @@
 import { inspect } from 'util';
 
 import { Injectable, Logger } from '@nestjs/common';
-import { Mutex, MutexInterface } from 'async-mutex';
+import { Mutex } from 'async-mutex';
 import Bluebird from 'bluebird';
 import _ from 'lodash';
 import puppeteer, { Browser, Page } from 'puppeteer';
@@ -36,12 +36,11 @@ export class PuppeteerService {
   async openPage(): Promise<OpenPageResult> {
     let browser: Browser;
     let page: Page;
-    const release: MutexInterface.Releaser = await this.mutex.acquire();
+    const release = await this.mutex.acquire();
 
     try {
       browser = await this.getBrowser();
-      const pages = await browser.pages();
-      page = pages.length > 0 ? _.first(pages) : await browser.newPage();
+      page = await browser.newPage();
       await page.setExtraHTTPHeaders({
         'Sec-Ch-Ua':
           '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
