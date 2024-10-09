@@ -29,7 +29,6 @@ import {
   FeedItem,
   FetchGoogleNewsResult,
   IsValidGoogleNewsItemResult,
-  GoogleNewsItem,
   SaveGoogleNewsResult,
   SummarizeArticleResult,
   GetPendingRetrievalGoogleNewsResult,
@@ -37,6 +36,7 @@ import {
   CreateGoogleNewsResult,
   CreateGoogleNewsParams,
   UpdateGoogleNewsParams,
+  RetrieveAndProcessArticlesResult,
 } from './type.js';
 
 @Injectable()
@@ -93,8 +93,7 @@ export class GoogleNewsService {
             for (const item of channel.item) {
               await queryRunner.startTransaction();
               try {
-                const googleNewsItem: GoogleNewsItem =
-                  this.extractGoogleNewsItem(item);
+                const googleNewsItem = this.extractGoogleNewsItem(item);
                 const { guid, link, title, source, pubDate } = googleNewsItem;
                 if (!this.isValidGoogleNewsItem(googleNewsItem)) {
                   this.logger.warn(
@@ -146,7 +145,7 @@ export class GoogleNewsService {
   }
 
   @Cron('* * * * *')
-  async retrieveAndProcessArticles(): Promise<void> {
+  async retrieveAndProcessArticles(): Promise<RetrieveAndProcessArticlesResult> {
     const pendingRetrievalGoogleNews =
       await this.getPendingRetrievalGoogleNews();
     for (const googleNews of pendingRetrievalGoogleNews) {
@@ -162,7 +161,6 @@ export class GoogleNewsService {
         const finalUrl = page.url();
         const html = await page.content();
         const summary = await this.summarizeArticle(html);
-        console.log(summary);
         await this.puppeteerService.closePage(page);
         if (!finalUrl || !summary) {
           throw new BadRequestException(`Failed to retrieve article`);

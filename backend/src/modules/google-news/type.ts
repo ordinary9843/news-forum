@@ -61,6 +61,8 @@ export type UpdateGoogleNewsResult = GoogleNewsEntity;
 
 export type SaveGoogleNewsResult = void;
 
+export type RetrieveAndProcessArticlesResult = void;
+
 export type FetchGoogleNewsResult = RssFeed;
 
 export type DoesNewsExistResult = boolean;
