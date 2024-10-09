@@ -4,27 +4,16 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Mutex, MutexInterface } from 'async-mutex';
 import Bluebird from 'bluebird';
 import _ from 'lodash';
-import { DateTime } from 'luxon';
 import puppeteer, { Browser, Page } from 'puppeteer';
 
 import {
-  BROWSER_EXPIRED_MILLISECONDS,
   CLOSE_BROWSER_RETRY_COUNT,
   CLOSE_PAGE_RETRY_COUNT,
-  MAX_BROWSER_INSTANCES,
-  MAX_USAGE_PER_BROWSER,
 } from './constant.js';
 import {
-  BrowserStatus,
-  CloseAllBrowsersResult,
   CreateBrowserResult,
-  DeleteExpiredBrowsersResult,
   GetBrowserResult,
-  MarkBrowserExpiredResult,
-  ShouldCreateBrowserResult,
-  ShouldMarkBrowserExpiredResult,
-  OpenBrowserPageResult,
-  GetAvailableBrowserResult,
+  OpenPageResult,
   CloseAllPagesResult,
   CloseBrowserResult,
   ClosePageResult,
@@ -32,46 +21,27 @@ import {
 
 @Injectable()
 export class PuppeteerService {
-  private readonly logger: Logger = new Logger(PuppeteerService.name);
-  private readonly browsers: Map<Browser, BrowserStatus> = new Map<
-    Browser,
-    BrowserStatus
-  >();
+  private readonly logger = new Logger(PuppeteerService.name);
   private readonly mutex: Mutex;
+  private browser: Browser;
 
   constructor() {
     this.mutex = new Mutex();
   }
 
   async onModuleDestroy() {
-    await this.closeAllBrowsers();
+    await this.closeBrowser(this.browser);
   }
 
-  async openBrowserPage(): Promise<OpenBrowserPageResult> {
+  async openPage(): Promise<OpenPageResult> {
     let browser: Browser;
     let page: Page;
     const release: MutexInterface.Releaser = await this.mutex.acquire();
 
     try {
       browser = await this.getBrowser();
-      if (_.isEmpty(browser)) {
-        throw new Error(
-          'openBrowserPage(): There are currently no browser available',
-        );
-      }
-      page = await browser.newPage();
-      await page.setRequestInterception(true);
-      page.on('request', (request) => {
-        if (
-          request.resourceType() === 'document' ||
-          request.resourceType() === 'xhr' ||
-          request.resourceType() === 'script'
-        ) {
-          request.continue();
-        } else {
-          request.abort();
-        }
-      });
+      const pages = await browser.pages();
+      page = pages.length > 0 ? _.first(pages) : await browser.newPage();
       await page.setExtraHTTPHeaders({
         'Sec-Ch-Ua':
           '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
@@ -90,10 +60,7 @@ export class PuppeteerService {
       release();
     }
 
-    return {
-      browser,
-      page,
-    };
+    return page;
   }
 
   async closeBrowser(
@@ -109,14 +76,12 @@ export class PuppeteerService {
 
     try {
       await browser.close();
-      this.browsers.delete(browser);
       this.logger.log('closeBrowser(): Browser process killed successfully');
     } catch (error) {
       if (_.has(browser, 'process')) {
         const process = browser.process();
         const killRes = process.kill('SIGKILL');
         if (killRes) {
-          this.browsers.delete(browser);
           this.logger.log(
             `closeBrowser(): Killed pid ${process.pid} successfully`,
           );
@@ -152,8 +117,6 @@ export class PuppeteerService {
     }
 
     try {
-      page.off('request');
-      await page.setRequestInterception(false);
       await page.close();
     } catch (error) {
       if (retryCount > 0) {
@@ -174,46 +137,16 @@ export class PuppeteerService {
   }
 
   private async getBrowser(): Promise<GetBrowserResult> {
-    const browser = (await this.shouldCreateBrowser())
-      ? await this.createBrowser()
-      : await this.getAvailableBrowser();
-    if (_.isEmpty(browser)) {
-      return null;
+    if (!this.browser) {
+      this.browser = await this.createBrowser();
     }
 
-    const { usageCount } = this.browsers.get(browser);
-    this.browsers.set(browser, {
-      usageCount: usageCount + 1,
-    });
-    if (this.shouldMarkBrowserExpired(browser)) {
-      this.markBrowserExpired(browser);
-    }
-
-    this.logger.verbose(
-      `Browser status (pid=${browser.process().pid}, usageCount=${usageCount})`,
-    );
-
-    return browser;
-  }
-
-  private async getAvailableBrowser(): Promise<GetAvailableBrowserResult> {
-    await this.deleteExpiredBrowsers();
-
-    let availableBrowser: Browser;
-    for (const [browser, { usageCount }] of this.browsers) {
-      if (usageCount < MAX_USAGE_PER_BROWSER) {
-        availableBrowser = browser;
-        break;
-      }
-    }
-
-    return availableBrowser;
+    return this.browser;
   }
 
   private async createBrowser(): Promise<CreateBrowserResult> {
-    const browser = await puppeteer.launch({
+    return await puppeteer.launch({
       headless: false,
-      timeout: 60000,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -223,62 +156,6 @@ export class PuppeteerService {
       ],
       ...(process.env.BIN_PATH && { executablePath: process.env.BIN_PATH }),
     });
-    this.browsers.set(browser, {
-      usageCount: 0,
-    });
-
-    return browser;
-  }
-
-  private async shouldCreateBrowser(): Promise<ShouldCreateBrowserResult> {
-    return this.browsers.size < MAX_BROWSER_INSTANCES;
-  }
-
-  private shouldMarkBrowserExpired(
-    browser: Browser,
-  ): ShouldMarkBrowserExpiredResult {
-    if (this.browsers.has(browser)) {
-      const { usageCount, expiredAt = 0 }: BrowserStatus =
-        this.browsers.get(browser);
-      if (usageCount >= MAX_USAGE_PER_BROWSER && expiredAt === 0) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private markBrowserExpired(browser: Browser): MarkBrowserExpiredResult {
-    const { usageCount } = this.browsers.get(browser);
-    this.browsers.set(browser, {
-      usageCount,
-      expiredAt: DateTime.now().toMillis() + BROWSER_EXPIRED_MILLISECONDS,
-    });
-    this.logger.verbose(
-      `markBrowserExpired(): Current browser status (usageCount=${usageCount})`,
-    );
-  }
-
-  private async deleteExpiredBrowsers(): Promise<DeleteExpiredBrowsersResult> {
-    const now: number = DateTime.now().toMillis();
-    await Bluebird.each(
-      this.browsers,
-      async ([browser, { expiredAt = 0 }]: [Browser, BrowserStatus]) => {
-        if (expiredAt > 0 && expiredAt <= now) {
-          await this.closeBrowser(browser);
-        }
-      },
-    );
-  }
-
-  private async closeAllBrowsers(): Promise<CloseAllBrowsersResult> {
-    this.logger.verbose('closeAllBrowsers:() Prepare delete all browsers');
-    while (this.browsers.size > 0) {
-      await Bluebird.each(this.browsers.keys(), async (browser: Browser) => {
-        await this.closeBrowser(browser);
-      });
-    }
-    this.logger.log('closeAllBrowsers:() Deleted all browsers successfully');
   }
 
   private async closeAllPages(browser: Browser): Promise<CloseAllPagesResult> {

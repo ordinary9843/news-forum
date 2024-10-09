@@ -22,7 +22,11 @@ import { CATEGORY_MAPPING } from '../../entities/news/constant.js';
 import { Category, Locale } from '../../entities/news/enum.js';
 import { PuppeteerService } from '../puppeteer/service.js';
 
-import { MAX_RETRIEVE_GOOGLE_NEWS_ATTEMPTS, RSS_URL } from './constant.js';
+import {
+  GET_PENDING_RETRIEVAL_GOOGLE_NEWS_LIMIT,
+  MAX_RETRIEVE_GOOGLE_NEWS_ATTEMPTS,
+  RSS_URL,
+} from './constant.js';
 import { LocaleQuery } from './enum.js';
 import {
   ExtractGoogleNewsItemResult,
@@ -52,7 +56,7 @@ export class GoogleNewsService {
   ) {}
 
   async onApplicationBootstrap() {
-    await this.saveGoogleNews();
+    // await this.saveGoogleNews();
     await this.retrieveAndProcessArticles();
   }
 
@@ -144,24 +148,25 @@ export class GoogleNewsService {
     await queryRunner.release();
   }
 
-  @Cron('* * * * *')
+  @Cron('*/5 * * * *')
   async retrieveAndProcessArticles(): Promise<RetrieveAndProcessArticlesResult> {
     const pendingRetrievalGoogleNews =
       await this.getPendingRetrievalGoogleNews();
+    this.logger.verbose(
+      `retrieveAndProcessArticle(): Has ${pendingRetrievalGoogleNews.length} pending retrieval google news`,
+    );
     for (const googleNews of pendingRetrievalGoogleNews) {
       let page = null;
       let id = null;
       try {
         const { id: googleNewsId, guid, link } = googleNews;
-        const { page: browserPage } =
-          await this.puppeteerService.openBrowserPage();
-        page = browserPage;
+        page = await this.puppeteerService.openPage();
         id = googleNewsId;
-        await page.goto(link, { waitUntil: 'networkidle0', timeout: 60000 });
+        await page.goto(link, { waitUntil: 'networkidle0' });
         const finalUrl = page.url();
         const html = await page.content();
         const summary = await this.summarizeArticle(html);
-        await this.puppeteerService.closePage(page);
+        console.log(summary);
         if (!finalUrl || !summary) {
           throw new BadRequestException(`Failed to retrieve article`);
         }
@@ -181,20 +186,9 @@ export class GoogleNewsService {
         this.logger.error(
           `retrieveAndProcessArticle: Failed to retrieve article (error=${inspect(error)})`,
         );
-        googleNews.retrieveCount = googleNews.retrieveCount + 1;
-        await this.googleNewsRepository.save(googleNews);
-
         await this.updateGoogleNews(id, {
           retrieveCount: googleNews.retrieveCount + 1,
         });
-      } finally {
-        if (page) {
-          await this.puppeteerService.closePage(page).catch((error) => {
-            this.logger.warn(
-              `retrieveAndProcessArticle: Failed to close page (error=${inspect(error)})`,
-            );
-          });
-        }
       }
     }
   }
@@ -238,6 +232,7 @@ export class GoogleNewsService {
         html: IsNull(),
         retrieveCount: LessThan(MAX_RETRIEVE_GOOGLE_NEWS_ATTEMPTS),
       },
+      take: GET_PENDING_RETRIEVAL_GOOGLE_NEWS_LIMIT,
     });
   }
 
