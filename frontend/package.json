@@ -1,0 +1,46 @@
+{
+  "name": "news-forum",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt --hostname 0.0.0.0",
+    "build": "nuxt build",
+    "start": "nuxt start",
+    "generate": "nuxt generate",
+    "lint:js": "eslint --ext \".js,.vue\" --ignore-path .gitignore .",
+    "lint:prettier": "prettier --check .",
+    "lint": "npm run lint:js && npm run lint:prettier",
+    "lintfix": "prettier --write --list-different . && npm run lint:js -- --fix",
+    "test:e2e": "nightwatch"
+  },
+  "dependencies": {
+    "@lottiefiles/dotlottie-vue": "^0.4.16",
+    "@lottiefiles/vue-lottie-player": "^1.1.0",
+    "@nuxtjs/axios": "^5.13.6",
+    "@nuxtjs/style-resources": "^1.2.2",
+    "ant-design-vue": "^1.7.8",
+    "clipboard": "^2.0.11",
+    "core-js": "^3.25.3",
+    "nuxt": "^2.15.8",
+    "nuxt-i18n": "^6.28.1",
+    "require-dir": "^1.2.0",
+    "vue": "^2.7.10",
+    "vue-server-renderer": "^2.7.10",
+    "vue-template-compiler": "^2.7.10"
+  },
+  "devDependencies": {
+    "@babel/eslint-parser": "^7.19.1",
+    "@nuxtjs/eslint-config": "^11.0.0",
+    "@nuxtjs/eslint-module": "^3.1.0",
+    "@nuxtjs/proxy": "^2.1.0",
+    "chromedriver": "^106.0.1",
+    "eslint": "^8.24.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-nuxt": "^4.0.0",
+    "eslint-plugin-vue": "^9.5.1",
+    "nightwatch": "^2.3.9",
+    "node-sass": "^4.14.0",
+    "prettier": "^2.7.1",
+    "sass-loader": "^10.2.0"
+  }
+}
