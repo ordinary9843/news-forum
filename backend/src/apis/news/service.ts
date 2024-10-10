@@ -48,8 +48,10 @@ export class NewsService {
       },
       take: limit,
       skip: (page - 1) * limit,
+      order: {
+        publishedAt: 'DESC',
+      },
     });
-
     const result = {
       totalItems,
       totalPages: Math.ceil(totalItems / limit),
