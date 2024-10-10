@@ -1,16 +1,7 @@
 import { NewsEntity } from '../../entities/news/entity.js';
 import { Category, Locale } from '../../entities/news/enum.js';
 
-export type NewsItem = {
-  locale: Locale;
-  category: Category;
-  guid: string;
-  link: string;
-  title: string;
-  description: string | null;
-  source: string;
-  publishedAt: Date;
-};
+import { PaginatedNews } from './dto.js';
 
 export type CreateNewsParams = {
   locale: Locale;
@@ -28,8 +19,10 @@ export type UpdateNewsByGuidParams = {
   description?: string | null;
 };
 
+export type GetNewsListResult = PaginatedNews;
+
+export type DoesNewsExistResult = boolean;
+
 export type CreateNewsResult = NewsEntity;
 
 export type UpdateNewsByGuidResult = NewsEntity;
-
-export type DoesNewsExistResult = boolean;

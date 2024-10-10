@@ -57,8 +57,8 @@ export class GoogleNewsService {
   ) {}
 
   async onApplicationBootstrap() {
-    await this.processGoogleNews();
-    await this.processNews();
+    this.processGoogleNews();
+    this.processNews();
   }
 
   async createGoogleNews(
@@ -77,7 +77,7 @@ export class GoogleNewsService {
       id,
     });
     if (!existingGoogleNews) {
-      throw new NotFoundException(`Google news with id ${id} not found`);
+      throw new NotFoundException(`Google news not found`);
     }
 
     Object.assign(existingGoogleNews, params);

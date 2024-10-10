@@ -40,7 +40,12 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.useGlobalFilters(app.get(HttpExceptionFilter));
   app.useGlobalInterceptors(app.get(HttpResponseInterceptor));
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
   app.use(json({ limit: '10mb' }));
 
   initSwagger(app);

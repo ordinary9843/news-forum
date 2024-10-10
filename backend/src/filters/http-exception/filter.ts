@@ -5,14 +5,13 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { Response } from 'express';
 import _ from 'lodash';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: any, host: ArgumentsHost) {
-    const response: Response = host.switchToHttp().getResponse<Response>();
-    const statusCode: HttpStatus = this.getStatusCode(exception);
+    const response = host.switchToHttp().getResponse();
+    const statusCode = this.getStatusCode(exception);
     response
       .status(statusCode)
       .header('Content-Type', 'application/json; charset=utf-8')
@@ -24,16 +23,16 @@ export class HttpExceptionFilter implements ExceptionFilter {
   }
 
   private getStatusCode(exception: HttpException): HttpStatus {
-    const statusCode: HttpStatus =
+    const statusCode =
       exception instanceof HttpException
-        ? (exception.getStatus() as HttpStatus)
+        ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
     return statusCode;
   }
 
-  private getMessage(exception: HttpException, statusCode: number): string {
-    let message: string =
+  private getMessage(exception: HttpException, statusCode: HttpStatus): string {
+    let message =
       exception.message ||
       `${
         statusCode >= HttpStatus.INTERNAL_SERVER_ERROR
@@ -41,11 +40,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
           : 'Client error'
       }`;
     if (exception instanceof HttpException) {
-      const response: string | object = exception.getResponse();
+      const response = exception.getResponse();
       if (typeof response === 'object' && 'message' in response) {
         message = _.isArray(response.message)
-          ? (response.message.shift() as string)
-          : (response.message as string);
+          ? response.message.shift()
+          : response.message;
       }
     }
 
