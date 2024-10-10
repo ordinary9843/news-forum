@@ -34,13 +34,11 @@ export class PuppeteerService {
   }
 
   async openPage(): Promise<OpenPageResult> {
-    let browser: Browser;
-    let page: Page;
     const release = await this.mutex.acquire();
 
     try {
-      browser = await this.getBrowser();
-      page = await browser.newPage();
+      const browser = await this.getBrowser();
+      const page = await browser.newPage();
       await page.setExtraHTTPHeaders({
         'Sec-Ch-Ua':
           '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
@@ -49,6 +47,8 @@ export class PuppeteerService {
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
       });
+
+      return page;
     } catch (error) {
       this.logger.error(
         `openBrowserPage(): Current browser status (error=${inspect(error)})`,
@@ -58,8 +58,6 @@ export class PuppeteerService {
     } finally {
       release();
     }
-
-    return page;
   }
 
   async closeBrowser(

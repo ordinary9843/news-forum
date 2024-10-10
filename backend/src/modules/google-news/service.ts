@@ -33,14 +33,15 @@ import {
   FeedItem,
   FetchGoogleNewsResult,
   IsValidGoogleNewsItemResult,
-  SaveGoogleNewsResult,
-  SummarizeArticleResult,
+  ProcessGoogleNewsResult,
+  SummarizeNewsFromHtmlResult,
   GetPendingRetrievalGoogleNewsResult,
   UpdateGoogleNewsResult,
   CreateGoogleNewsResult,
   CreateGoogleNewsParams,
   UpdateGoogleNewsParams,
-  SaveArticlesResult,
+  ProcessNewsResult,
+  FetchNewsResult,
 } from './type.js';
 
 @Injectable()
@@ -56,8 +57,8 @@ export class GoogleNewsService {
   ) {}
 
   async onApplicationBootstrap() {
-    // await this.saveGoogleNews();
-    await this.saveArticles();
+    await this.processGoogleNews();
+    await this.processNews();
   }
 
   async createGoogleNews(
@@ -85,7 +86,7 @@ export class GoogleNewsService {
   }
 
   @Cron('*/5 * * * *')
-  async saveGoogleNews(): Promise<SaveGoogleNewsResult> {
+  async processGoogleNews(): Promise<ProcessGoogleNewsResult> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     const categories = Object.values(Category);
@@ -101,12 +102,12 @@ export class GoogleNewsService {
                 const { guid, link, title, source, pubDate } = googleNewsItem;
                 if (!this.isValidGoogleNewsItem(googleNewsItem)) {
                   this.logger.warn(
-                    `saveGoogleNews(): Skipping invalid news "${title}"`,
+                    `processGoogleNews(): Skipping invalid news (title=${title})`,
                   );
                   continue;
                 } else if (await this.newsService.doesNewsExist(guid)) {
                   this.logger.warn(
-                    `saveGoogleNews(): News "${title}" already exists`,
+                    `processGoogleNews(): News already exists (title=${title})`,
                   );
                   continue;
                 }
@@ -125,12 +126,12 @@ export class GoogleNewsService {
                   publishedAt: pubDate,
                 });
                 this.logger.log(
-                  `saveGoogleNews(): News "${title}" has been saved successfully`,
+                  `processGoogleNews(): News has been saved successfully (title=${title})`,
                 );
                 await queryRunner.commitTransaction();
               } catch (error) {
                 this.logger.error(
-                  `saveGoogleNews(): Failed to save google news & news in transaction (error=${inspect(
+                  `processGoogleNews(): Failed to save news in transaction process (error=${inspect(
                     error,
                   )})`,
                 );
@@ -140,7 +141,7 @@ export class GoogleNewsService {
           }
         } catch (error) {
           this.logger.error(
-            `saveGoogleNews(): Failed to fetch google news (error=${inspect(error)})`,
+            `processGoogleNews(): Failed to fetch news (error=${inspect(error)})`,
           );
         }
       }
@@ -149,26 +150,23 @@ export class GoogleNewsService {
   }
 
   @Cron('*/3 * * * *')
-  async saveArticles(): Promise<SaveArticlesResult> {
+  async processNews(): Promise<ProcessNewsResult> {
     const pendingRetrievalGoogleNews =
       await this.getPendingRetrievalGoogleNews();
     for (const googleNews of pendingRetrievalGoogleNews) {
       let page = null;
-      let id = null;
+      const { id, guid, link, retrieveCount } = googleNews;
+
       try {
-        const { id: googleNewsId, guid, link } = googleNews;
         this.logger.verbose(
-          `retrieveAndProcessArticle(): Prepare retrieve article "${link}"`,
+          `processNews(): Prepare retrieve news (link=${link})`,
         );
 
-        page = await this.puppeteerService.openPage();
-        id = googleNewsId;
-        await page.goto(link, { waitUntil: 'networkidle2' });
-        const finalUrl = page.url();
-        const html = await page.content();
-        const summary = await this.summarizeArticle(html);
+        const { browserPage, html, finalUrl, summary } =
+          await this.fetchNews(link);
+        page = browserPage;
         if (!finalUrl || !summary) {
-          throw new BadRequestException(`Failed to retrieve article`);
+          throw new BadRequestException(`Failed to retrieve news`);
         }
 
         await this.newsService.updateNewsByGuid(guid, {
@@ -180,23 +178,17 @@ export class GoogleNewsService {
           html,
         });
         this.logger.log(
-          `retrieveAndProcessArticle(): News "${link}" has been updated successfully`,
+          `processNews(): News has been updated successfully (link=${link})`,
         );
       } catch (error) {
         this.logger.error(
-          `retrieveAndProcessArticle: Failed to retrieve article (error=${inspect(error)})`,
+          `processNews: Failed to retrieve news (error=${inspect(error)})`,
         );
         await this.updateGoogleNews(id, {
-          retrieveCount: googleNews.retrieveCount + 1,
+          retrieveCount: retrieveCount + 1,
         });
       } finally {
-        if (page) {
-          await this.puppeteerService.closePage(page).catch((error) => {
-            this.logger.error(
-              `retrieveAndProcessArticle: Failed to close page (error=${inspect(error)})`,
-            );
-          });
-        }
+        await this.puppeteerService.closePage(page);
       }
     }
   }
@@ -244,9 +236,35 @@ export class GoogleNewsService {
     });
   }
 
-  private async summarizeArticle(
+  private async fetchNews(url: string): Promise<FetchNewsResult> {
+    let page = null;
+    let html = '';
+    let finalUrl = '';
+    let summary = '';
+
+    try {
+      page = await this.puppeteerService.openPage();
+      await page.goto(url, { waitUntil: 'networkidle2' });
+      finalUrl = page.url();
+      html = await page.content();
+      summary = await this.summarizeNewsFromHtml(html);
+    } catch (error) {
+      this.logger.error(
+        `fetchNews: Failed to fetch news (error=${inspect(error)})`,
+      );
+    }
+
+    return {
+      browserPage: page,
+      html,
+      finalUrl,
+      summary,
+    };
+  }
+
+  private async summarizeNewsFromHtml(
     html: string,
-  ): Promise<SummarizeArticleResult> {
+  ): Promise<SummarizeNewsFromHtmlResult> {
     try {
       const article = await extractFromHtml(html);
       const options = {
@@ -260,14 +278,13 @@ export class GoogleNewsService {
           { selector: 'h5', options: { uppercase: false } },
           { selector: 'h6', options: { uppercase: false } },
         ],
-        wordwrap: false,
         preserveNewlines: true,
       };
 
       return _.trim(_.replace(convert(article.content, options), /\s+/g, ' '));
     } catch (error) {
       this.logger.error(
-        `summarizeArticle: Failed to summarize article (error=${inspect(error)})`,
+        `summarizeNewsFromHtml: Failed to summarize article (error=${inspect(error)})`,
       );
 
       return '';

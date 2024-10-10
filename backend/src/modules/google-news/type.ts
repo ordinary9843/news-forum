@@ -1,3 +1,5 @@
+import { Page } from 'puppeteer';
+
 import { GoogleNewsEntity } from '../../entities/google-news/entity.js';
 
 export type FeedGuid = {
@@ -59,9 +61,9 @@ export type CreateGoogleNewsResult = GoogleNewsEntity;
 
 export type UpdateGoogleNewsResult = GoogleNewsEntity;
 
-export type SaveGoogleNewsResult = void;
+export type ProcessGoogleNewsResult = void;
 
-export type SaveArticlesResult = void;
+export type ProcessNewsResult = void;
 
 export type FetchGoogleNewsResult = RssFeed;
 
@@ -73,4 +75,11 @@ export type IsValidGoogleNewsItemResult = boolean;
 
 export type GetPendingRetrievalGoogleNewsResult = GoogleNewsEntity[];
 
-export type SummarizeArticleResult = string;
+export type FetchNewsResult = {
+  browserPage: Page;
+  html: string;
+  finalUrl: string;
+  summary: string;
+};
+
+export type SummarizeNewsFromHtmlResult = string;
