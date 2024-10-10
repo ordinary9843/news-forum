@@ -55,12 +55,6 @@ export default class CreateGoogleNews1697461317886
             default: DEFAULT_TIMESTAMP,
           },
         ],
-        indices: [
-          {
-            name: 'html:retrieve_count',
-            columnNames: ['html', 'retrieve_count'],
-          },
-        ],
       }),
       true,
     );

@@ -77,7 +77,7 @@ export class GoogleNewsService {
       id,
     });
     if (!existingGoogleNews) {
-      throw new NotFoundException(`Google news not found`);
+      throw new NotFoundException('Google news not found');
     }
 
     Object.assign(existingGoogleNews, params);

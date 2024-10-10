@@ -99,7 +99,7 @@ export class NewsService {
   ): Promise<UpdateNewsByGuidResult> {
     const existingNews = await this.newsRepository.findOneBy({ guid });
     if (!existingNews) {
-      throw new NotFoundException(`News not found`);
+      throw new NotFoundException('News not found');
     }
 
     Object.assign(existingNews, params);

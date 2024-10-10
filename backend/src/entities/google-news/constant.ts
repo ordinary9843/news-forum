@@ -1,1 +1,1 @@
-export const GOOGLE_NEWS_TABLE: string = 'google_news';
+export const GOOGLE_NEWS_TABLE = 'google_news';

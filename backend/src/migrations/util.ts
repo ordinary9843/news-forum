@@ -8,7 +8,7 @@ export async function createEnum(
   enumName: string,
   enumValues: string[],
 ): Promise<void> {
-  const [{ exists }]: ExistsQuery[] = (await queryRunner.query(
+  const [{ exists }] = (await queryRunner.query(
     `SELECT EXISTS(SELECT 1 FROM pg_type WHERE typname = '${enumName}')`,
   )) as ExistsQuery[];
   if (exists) {
