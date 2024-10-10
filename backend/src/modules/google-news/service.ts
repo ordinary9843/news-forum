@@ -42,6 +42,8 @@ import {
   UpdateGoogleNewsParams,
   ProcessNewsResult,
   FetchNewsResult,
+  SanitizeDescriptionResult,
+  TruncateBriefResult,
 } from './type.js';
 
 @Injectable()
@@ -198,10 +200,10 @@ export class GoogleNewsService {
     category: Category,
   ): Promise<FetchGoogleNewsResult> {
     const url = `${RSS_URL}/topics/${CATEGORY_MAPPING[category]}?${LocaleQuery[locale]}`;
-    const response = await axios.get(url);
+    const { data } = await axios.get(url);
     const parser = new Parser();
 
-    return await parser.parseStringPromise(response.data);
+    return await parser.parseStringPromise(data);
   }
 
   private extractGoogleNewsItem(
@@ -281,28 +283,16 @@ export class GoogleNewsService {
   ): Promise<ExtractNewsFromHtmlResult> {
     try {
       const article = await extractFromHtml(html);
-      const options = {
-        selectors: [
-          { selector: 'a', options: { ignoreHref: true } },
-          { selector: 'img', format: 'skip' },
-          { selector: 'h1', options: { uppercase: false } },
-          { selector: 'h2', options: { uppercase: false } },
-          { selector: 'h3', options: { uppercase: false } },
-          { selector: 'h4', options: { uppercase: false } },
-          { selector: 'h5', options: { uppercase: false } },
-          { selector: 'h6', options: { uppercase: false } },
-        ],
-        preserveNewlines: true,
-      };
-      if (!_.has(article, 'description') || !_.has(article, 'content')) {
+      if (!_.has(article, 'content')) {
         throw new BadRequestException('Failed to extract html');
       }
 
-      const { description, content } = article;
+      const { content } = article;
+      const description = this.sanitizeDescription(content);
 
       return {
-        brief: description,
-        description: _.trim(_.replace(convert(content, options), /\s+/g, ' ')),
+        brief: this.truncateBrief(description),
+        description,
       };
     } catch (error) {
       this.logger.error(
@@ -314,5 +304,30 @@ export class GoogleNewsService {
       brief: '',
       description: '',
     };
+  }
+
+  private sanitizeDescription(content: string): SanitizeDescriptionResult {
+    const options = {
+      selectors: [
+        { selector: 'a', options: { ignoreHref: true } },
+        { selector: 'img', format: 'skip' },
+        { selector: 'h1', options: { uppercase: false } },
+        { selector: 'h2', options: { uppercase: false } },
+        { selector: 'h3', options: { uppercase: false } },
+        { selector: 'h4', options: { uppercase: false } },
+        { selector: 'h5', options: { uppercase: false } },
+        { selector: 'h6', options: { uppercase: false } },
+      ],
+      preserveNewlines: true,
+    };
+
+    return _.trim(_.replace(convert(content, options), /\s+/g, ' '));
+  }
+
+  private truncateBrief(description: string): TruncateBriefResult {
+    return _.truncate(description, {
+      length: 150,
+      omission: '...',
+    });
   }
 }

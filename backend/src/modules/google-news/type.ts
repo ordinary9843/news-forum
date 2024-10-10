@@ -87,3 +87,7 @@ export type ExtractNewsFromHtmlResult = {
   brief: string;
   description: string;
 };
+
+export type SanitizeDescriptionResult = string;
+
+export type TruncateBriefResult = string;
