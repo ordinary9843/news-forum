@@ -79,7 +79,11 @@ export type FetchNewsResult = {
   browserPage: Page;
   html: string;
   finalUrl: string;
-  summary: string;
+  brief: string;
+  description: string;
 };
 
-export type SummarizeNewsFromHtmlResult = string;
+export type SummarizeNewsFromHtmlResult = {
+  brief: string;
+  description: string;
+};

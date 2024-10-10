@@ -44,6 +44,7 @@ export class NewsService {
     const [items, totalItems] = await this.newsRepository.findAndCount({
       where: {
         link: Not(IsNull()),
+        brief: Not(IsNull()),
         description: Not(IsNull()),
       },
       take: limit,
@@ -65,6 +66,7 @@ export class NewsService {
             'category',
             'link',
             'title',
+            'brief',
             'description',
             'source',
             'publishedAt',

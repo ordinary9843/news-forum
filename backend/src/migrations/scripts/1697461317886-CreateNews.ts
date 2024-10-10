@@ -54,6 +54,11 @@ export default class CreateNews1697461317886 implements MigrationInterface {
             length: '255',
           },
           {
+            name: 'brief',
+            type: 'text',
+            isNullable: true,
+          },
+          {
             name: 'description',
             type: 'text',
             isNullable: true,

@@ -7,15 +7,14 @@ export type CreateNewsParams = {
   locale: Locale;
   category: Category;
   guid: string;
-  link: string;
   title: string;
-  description: string;
   source: string;
   publishedAt: Date;
 };
 
 export type UpdateNewsByGuidParams = {
   link?: string | null;
+  brief?: string | null;
   description?: string | null;
 };
 

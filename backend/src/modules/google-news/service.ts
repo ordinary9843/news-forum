@@ -119,9 +119,7 @@ export class GoogleNewsService {
                   locale,
                   category,
                   guid,
-                  link: null,
                   title,
-                  description: null,
                   source,
                   publishedAt: pubDate,
                 });
@@ -163,16 +161,17 @@ export class GoogleNewsService {
           `processNews(): Prepare retrieve news (title=${title})`,
         );
 
-        const { browserPage, html, finalUrl, summary } =
+        const { browserPage, html, finalUrl, brief, description } =
           await this.fetchNews(link);
         page = browserPage;
-        if (!finalUrl || !summary) {
+        if (!finalUrl || !brief || !description) {
           throw new BadRequestException(`Failed to retrieve news`);
         }
 
         await this.newsService.updateNewsByGuid(guid, {
           link: finalUrl,
-          description: summary,
+          brief,
+          description,
         });
         await this.updateGoogleNews(id, {
           link,
@@ -247,16 +246,21 @@ export class GoogleNewsService {
 
   private async fetchNews(url: string): Promise<FetchNewsResult> {
     let page = null;
-    let html = '';
-    let finalUrl = '';
-    let summary = '';
 
     try {
       page = await this.puppeteerService.openPage();
       await page.goto(url, { waitUntil: 'networkidle2' });
-      finalUrl = page.url();
-      html = await page.content();
-      summary = await this.summarizeNewsFromHtml(html);
+      const finalUrl = page.url();
+      const html = await page.content();
+      const { brief, description } = await this.summarizeNewsFromHtml(html);
+
+      return {
+        browserPage: page,
+        html,
+        finalUrl,
+        brief,
+        description,
+      };
     } catch (error) {
       this.logger.error(
         `fetchNews: Failed to fetch news (error=${inspect(error)})`,
@@ -265,9 +269,10 @@ export class GoogleNewsService {
 
     return {
       browserPage: page,
-      html,
-      finalUrl,
-      summary,
+      html: '',
+      finalUrl: '',
+      brief: '',
+      description: '',
     };
   }
 
@@ -289,14 +294,25 @@ export class GoogleNewsService {
         ],
         preserveNewlines: true,
       };
+      if (!_.has(article, 'description') || !_.has(article, 'content')) {
+        throw new BadRequestException('Failed to extract html');
+      }
 
-      return _.trim(_.replace(convert(article.content, options), /\s+/g, ' '));
+      return {
+        brief: article.description,
+        description: _.trim(
+          _.replace(convert(article.content, options), /\s+/g, ' '),
+        ),
+      };
     } catch (error) {
       this.logger.error(
-        `summarizeNewsFromHtml: Failed to summarize article (error=${inspect(error)})`,
+        `summarizeNewsFromHtml(): Failed to summarize article (error=${inspect(error)})`,
       );
 
-      return '';
+      return {
+        brief: '',
+        description: '',
+      };
     }
   }
 }

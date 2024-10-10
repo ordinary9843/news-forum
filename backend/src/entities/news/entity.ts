@@ -40,6 +40,9 @@ export class NewsEntity {
   title: string;
 
   @Column({ type: 'text', nullable: true })
+  brief: string;
+
+  @Column({ type: 'text', nullable: true })
   description: string;
 
   @Column({ type: 'varchar', length: 128 })
