@@ -83,7 +83,7 @@ export type FetchNewsResult = {
   description: string;
 };
 
-export type SummarizeNewsFromHtmlResult = {
+export type ExtractNewsFromHtmlResult = {
   brief: string;
   description: string;
 };

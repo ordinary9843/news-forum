@@ -34,7 +34,7 @@ import {
   FetchGoogleNewsResult,
   IsValidGoogleNewsItemResult,
   ProcessGoogleNewsResult,
-  SummarizeNewsFromHtmlResult,
+  ExtractNewsFromHtmlResult,
   GetPendingRetrievalGoogleNewsResult,
   UpdateGoogleNewsResult,
   CreateGoogleNewsResult,
@@ -252,7 +252,7 @@ export class GoogleNewsService {
       await page.goto(url, { waitUntil: 'networkidle2' });
       const finalUrl = page.url();
       const html = await page.content();
-      const { brief, description } = await this.summarizeNewsFromHtml(html);
+      const { brief, description } = await this.extractNewsFromHtml(html);
 
       return {
         browserPage: page,
@@ -276,9 +276,9 @@ export class GoogleNewsService {
     };
   }
 
-  private async summarizeNewsFromHtml(
+  private async extractNewsFromHtml(
     html: string,
-  ): Promise<SummarizeNewsFromHtmlResult> {
+  ): Promise<ExtractNewsFromHtmlResult> {
     try {
       const article = await extractFromHtml(html);
       const options = {
@@ -298,21 +298,21 @@ export class GoogleNewsService {
         throw new BadRequestException('Failed to extract html');
       }
 
+      const { description, content } = article;
+
       return {
-        brief: article.description,
-        description: _.trim(
-          _.replace(convert(article.content, options), /\s+/g, ' '),
-        ),
+        brief: description,
+        description: _.trim(_.replace(convert(content, options), /\s+/g, ' ')),
       };
     } catch (error) {
       this.logger.error(
         `summarizeNewsFromHtml(): Failed to summarize article (error=${inspect(error)})`,
       );
-
-      return {
-        brief: '',
-        description: '',
-      };
     }
+
+    return {
+      brief: '',
+      description: '',
+    };
   }
 }
