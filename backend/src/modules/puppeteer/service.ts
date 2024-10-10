@@ -143,7 +143,7 @@ export class PuppeteerService {
 
   private async createBrowser(): Promise<CreateBrowserResult> {
     return await puppeteer.launch({
-      headless: false,
+      headless: true,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
