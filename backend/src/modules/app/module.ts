@@ -8,6 +8,7 @@ import { Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
@@ -47,6 +48,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
     NewsModule,
     JsonModule,
     RedisModule,
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       useFactory: async () => ({
         ...dataSourceOptions,
