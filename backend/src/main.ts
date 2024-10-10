@@ -34,8 +34,7 @@ const initSwagger = (app: NestExpressApplication) => {
 };
 
 async function bootstrap() {
-  const app: NestExpressApplication =
-    await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.enableCors();
   app.setGlobalPrefix('api');
   app.useGlobalFilters(app.get(HttpExceptionFilter));
@@ -47,9 +46,7 @@ async function bootstrap() {
     }),
   );
   app.use(json({ limit: '10mb' }));
-
   initSwagger(app);
-
   await app.listen(3000);
 }
 
