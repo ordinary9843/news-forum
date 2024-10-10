@@ -155,11 +155,12 @@ export class GoogleNewsService {
       await this.getPendingRetrievalGoogleNews();
     for (const googleNews of pendingRetrievalGoogleNews) {
       let page = null;
-      const { id, guid, link, retrieveCount } = googleNews;
+      const { id, guid, link, retrieveCount, news } = googleNews;
+      const { title } = news;
 
       try {
         this.logger.verbose(
-          `processNews(): Prepare retrieve news (link=${link})`,
+          `processNews(): Prepare retrieve news (title=${title})`,
         );
 
         const { browserPage, html, finalUrl, summary } =
@@ -178,7 +179,7 @@ export class GoogleNewsService {
           html,
         });
         this.logger.log(
-          `processNews(): News has been updated successfully (link=${link})`,
+          `processNews(): News has been updated successfully (title=${title})`,
         );
       } catch (error) {
         this.logger.error(
@@ -228,6 +229,14 @@ export class GoogleNewsService {
 
   private async getPendingRetrievalGoogleNews(): Promise<GetPendingRetrievalGoogleNewsResult> {
     return await this.googleNewsRepository.find({
+      relations: {
+        news: true,
+      },
+      select: {
+        news: {
+          title: true,
+        },
+      },
       where: {
         html: IsNull(),
         retrieveCount: LessThan(MAX_RETRIEVE_GOOGLE_NEWS_ATTEMPTS),

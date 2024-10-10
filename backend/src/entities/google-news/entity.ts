@@ -5,9 +5,13 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   AfterLoad,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 
 import { TIMESTAMP_PRECISION, DEFAULT_TIMESTAMP } from '../constant.js';
+
+import { NewsEntity } from '../news/entity.js';
 
 import { GOOGLE_NEWS_TABLE } from './constant.js';
 
@@ -50,4 +54,8 @@ export class GoogleNewsEntity {
     default: () => DEFAULT_TIMESTAMP,
   })
   updatedAt: Date;
+
+  @ManyToOne(() => NewsEntity)
+  @JoinColumn({ name: 'guid', referencedColumnName: 'guid' })
+  news: NewsEntity;
 }
