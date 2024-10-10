@@ -8,7 +8,10 @@ import { NewsEntity } from '../../entities/news/entity.js';
 
 import { DateService } from '../../modules/date/service.js';
 
-import { GET_NEWS_LIST_LIMIT } from './constant.js';
+import { JsonService } from '../../modules/json/service.js';
+import { RedisService } from '../../modules/redis/service.js';
+
+import { GET_NEWS_LIST_CACHE_TTL, GET_NEWS_LIST_LIMIT } from './constant.js';
 import { GetNewsListQuery } from './dto.js';
 import {
   CreateNewsParams,
@@ -25,9 +28,18 @@ export class NewsService {
     @InjectRepository(NewsEntity)
     readonly newsRepository: Repository<NewsEntity>,
     private readonly dateService: DateService,
+    private readonly redisService: RedisService,
+    private readonly jsonService: JsonService,
   ) {}
 
   async getNewsList(query: GetNewsListQuery): Promise<GetNewsListResult> {
+    const cacheKey = this.getNewsListCacheKey(query);
+    if (await this.redisService.exists(cacheKey)) {
+      return (
+        this.jsonService.parse(await this.redisService.get(cacheKey)) || []
+      );
+    }
+
     const { page = 1, limit = GET_NEWS_LIST_LIMIT } = query;
     const [items, totalItems] = await this.newsRepository.findAndCount({
       where: {
@@ -38,7 +50,7 @@ export class NewsService {
       skip: (page - 1) * limit,
     });
 
-    return {
+    const result = {
       totalItems,
       totalPages: Math.ceil(totalItems / limit),
       pageItems: items.length,
@@ -59,6 +71,14 @@ export class NewsService {
         };
       }),
     };
+
+    await this.redisService.set(
+      cacheKey,
+      this.jsonService.stringify(result),
+      GET_NEWS_LIST_CACHE_TTL,
+    );
+
+    return result;
   }
 
   async doesNewsExist(guid: string): Promise<DoesNewsExistResult> {
@@ -85,5 +105,9 @@ export class NewsService {
     Object.assign(existingNews, params);
 
     return await this.newsRepository.save(existingNews);
+  }
+
+  private getNewsListCacheKey(query: GetNewsListQuery) {
+    return `get_news_list_${this.jsonService.stringify(query)}`;
   }
 }
