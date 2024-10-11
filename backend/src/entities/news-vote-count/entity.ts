@@ -9,8 +9,9 @@ import {
 
 import { TIMESTAMP_PRECISION, DEFAULT_TIMESTAMP } from '../constant.js';
 
+import { Bias } from '../news-vote/enum.js';
+
 import { NEWS_VOTE_COUNT_TABLE } from './constant.js';
-import { Bias } from './enum.js';
 
 @Entity(NEWS_VOTE_COUNT_TABLE)
 export class NewsVoteCountEntity {

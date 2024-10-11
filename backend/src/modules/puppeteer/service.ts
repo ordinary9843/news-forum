@@ -1,6 +1,7 @@
 import { inspect } from 'util';
 
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Mutex } from 'async-mutex';
 import Bluebird from 'bluebird';
 import _ from 'lodash';
@@ -24,9 +25,11 @@ export class PuppeteerService {
   private readonly logger = new Logger(PuppeteerService.name);
   private readonly mutex: Mutex;
   private browser: Browser;
+  private binPath: string;
 
-  constructor() {
+  constructor(private readonly configService: ConfigService) {
     this.mutex = new Mutex();
+    this.binPath = this.configService.get<string>('PUPPETEER.BIN_PATH');
   }
 
   async onModuleDestroy() {
@@ -151,7 +154,7 @@ export class PuppeteerService {
         '--disable-notifications',
         '--disable-infobars',
       ],
-      ...(process.env.BIN_PATH && { executablePath: process.env.BIN_PATH }),
+      ...(this.binPath && { executablePath: this.binPath }),
     });
   }
 

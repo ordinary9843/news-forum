@@ -1,4 +1,4 @@
-import path, { dirname } from 'path';
+import { dirname, join } from 'path';
 
 import { fileURLToPath } from 'url';
 
@@ -8,7 +8,7 @@ import { Config } from '../abstract.config.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-class TypeOrmConfig extends Config {
+export class TypeOrmConfig extends Config {
   constructor() {
     super('TYPEORM');
   }
@@ -31,6 +31,6 @@ export const dataSourceOptions: DataSourceOptions = {
 
 export default new DataSource({
   ...dataSourceOptions,
-  entities: [path.join(__dirname, '../../entities/**/*.{ts,js}')],
-  migrations: [path.join(__dirname, '../../migrations/scripts/*.{ts,js}')],
+  entities: [join(__dirname, '../../entities/**/*.{ts,js}')],
+  migrations: [join(__dirname, '../../migrations/scripts/*.{ts,js}')],
 });

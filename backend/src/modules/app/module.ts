@@ -13,6 +13,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { NewsModule } from '../../apis/news/module.js';
+import PuppeteerConfig from '../../configs/puppeteer/config.js';
 import RedisConfig from '../../configs/redis/config.js';
 import { dataSourceOptions } from '../../configs/typeorm/config.js';
 
@@ -41,7 +42,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
-      load: [RedisConfig],
+      load: [
+        new PuppeteerConfig().registerConfig(),
+        new RedisConfig().registerConfig(),
+      ],
     }),
     DateModule,
     GoogleNewsModule,
