@@ -1,13 +1,19 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Repository } from 'typeorm';
 
 import { NewsVoteEntity } from '../../entities/news-vote/entity.js';
 
-import { JsonService } from '../json/service.js';
-import { NewsVoteCountService } from '../news-vote-count/service.js';
-import { RedisService } from '../redis/service.js';
+import { JsonService } from '../../modules/json/service.js';
+import { NewsVoteCountService } from '../../modules/news-vote-count/service.js';
+import { RedisService } from '../../modules/redis/service.js';
+
+import { NewsService } from '../news/service.js';
 
 import { CAST_VOTE_CACHE_TTL } from './constant.js';
 import {
@@ -24,6 +30,7 @@ export class NewsVoteService {
   constructor(
     @InjectRepository(NewsVoteEntity)
     readonly newsVoteRepository: Repository<NewsVoteEntity>,
+    private readonly newsService: NewsService,
     private readonly newsVoteCountService: NewsVoteCountService,
     private readonly redisService: RedisService,
     private readonly jsonService: JsonService,
@@ -31,7 +38,9 @@ export class NewsVoteService {
 
   async castVote(params: CastVoteParams): Promise<CastVoteResult> {
     const { newsId, bias, votedIp } = params;
-    if (
+    if (!(await this.newsService.doesNewsExist(newsId))) {
+      throw new NotFoundException('News does not exist');
+    } else if (
       await this.doesNewsVoteExist({
         newsId,
         votedIp,

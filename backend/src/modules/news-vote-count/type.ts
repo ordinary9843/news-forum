@@ -1,5 +1,5 @@
+import { NewsVoteCounts } from '../../apis/news-vote/dto.js';
 import { Bias } from '../../entities/news-vote/enum.js';
-import { NewsVoteCounts } from '../news-vote/dto.js';
 
 export type IncreaseVoteCountParams = {
   newsId: number;

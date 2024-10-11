@@ -107,7 +107,7 @@ export class GoogleNewsService {
                     `processGoogleNews(): Skipping invalid news (title=${title})`,
                   );
                   continue;
-                } else if (await this.newsService.doesNewsExist(guid)) {
+                } else if (await this.newsService.doesNewsExistByGuid(guid)) {
                   this.logger.warn(
                     `processGoogleNews(): News already exists (title=${title})`,
                   );

@@ -16,6 +16,7 @@ import { GetNewsListQuery } from './dto.js';
 import {
   CreateNewsParams,
   CreateNewsResult,
+  DoesNewsExistByGuidResult,
   DoesNewsExistResult,
   GenerateNewsListCacheKeyParams,
   GenerateNewsListCacheKeyResult,
@@ -58,7 +59,7 @@ export class NewsService {
     const result = {
       totalItems,
       totalPages: Math.ceil(totalItems / limit),
-      pageItems: items.length,
+      pageSize: items.length,
       page: page,
       items: _.map(items, (item) => {
         return {
@@ -87,7 +88,15 @@ export class NewsService {
     return result;
   }
 
-  async doesNewsExist(guid: string): Promise<DoesNewsExistResult> {
+  async doesNewsExist(id: number): Promise<DoesNewsExistResult> {
+    return (
+      (await this.newsRepository.count({
+        where: { id },
+      })) > 0
+    );
+  }
+
+  async doesNewsExistByGuid(guid: string): Promise<DoesNewsExistByGuidResult> {
     return (
       (await this.newsRepository.count({
         where: { guid },

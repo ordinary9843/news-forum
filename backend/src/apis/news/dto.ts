@@ -6,15 +6,11 @@ import {
   IsInt,
   IsOptional,
   IsPositive,
-  IsString,
   Max,
   Min,
 } from 'class-validator';
 
 import { Category, Locale } from '../../entities/news/enum.js';
-import { Bias } from '../../entities/news-vote/enum.js';
-import { NewsVoteCounts } from '../../modules/news-vote/dto.js';
-import { CastVoteResult } from '../../modules/news-vote/type.js';
 import { ApiResponse } from '../interface.js';
 
 import { GetNewsListResult } from './type.js';
@@ -59,7 +55,7 @@ export class PaginatedNews {
   totalPages: number;
 
   @ApiProperty({ example: 1 })
-  pageItems: number;
+  pageSize: number;
 
   @ApiProperty({ example: 1 })
   page: number;
@@ -87,23 +83,6 @@ export class GetNewsListQuery {
   category?: Category;
 }
 
-export class CastVoteBody {
-  @ApiProperty({
-    example: Bias.FAIR,
-  })
-  @IsEnum(Bias)
-  bias: Bias;
-
-  @ApiProperty({
-    example: '192.168.1.1',
-    required: false,
-    readOnly: true,
-  })
-  @IsString()
-  @IsOptional()
-  readonly votedIp?: string;
-}
-
 export class GetNewsListApiOkResponse implements ApiResponse {
   @ApiProperty({ example: true })
   success: boolean;
@@ -119,42 +98,6 @@ export class GetNewsListApiOkResponse implements ApiResponse {
 }
 
 export class GetNewsListApiTooManyRequestsResponse implements ApiResponse {
-  @ApiProperty({ example: false })
-  success: boolean;
-
-  @ApiProperty({ example: HttpStatus.TOO_MANY_REQUESTS })
-  statusCode: HttpStatus;
-
-  @ApiProperty({ example: 'Too many requests' })
-  message: string;
-}
-
-export class CastVoteApiOkResponse implements ApiResponse {
-  @ApiProperty({ example: true })
-  success: boolean;
-
-  @ApiProperty({ example: HttpStatus.OK })
-  statusCode: HttpStatus;
-
-  @ApiProperty({ example: 'Success' })
-  message: string;
-
-  @ApiProperty({ type: NewsVoteCounts })
-  result: CastVoteResult;
-}
-
-export class CastVoteApiBadRequestResponse implements ApiResponse {
-  @ApiProperty({ example: false })
-  success: boolean;
-
-  @ApiProperty({ example: HttpStatus.BAD_REQUEST })
-  statusCode: HttpStatus;
-
-  @ApiProperty({ example: 'Vote has already been cast for this news' })
-  message: string;
-}
-
-export class CastVoteApiTooManyRequestsResponse implements ApiResponse {
   @ApiProperty({ example: false })
   success: boolean;
 
