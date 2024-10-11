@@ -9,7 +9,6 @@ import {
   LOCALE_ENUM_NAME,
   NEWS_TABLE,
 } from '../../entities/news/constant.js';
-
 import { Category, Locale } from '../../entities/news/enum.js';
 
 import { DownResult, UpResult } from '../type.js';
