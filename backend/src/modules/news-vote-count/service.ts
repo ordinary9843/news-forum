@@ -88,9 +88,9 @@ export class NewsVoteCountService {
         `increaseVoteCount(): Failed to update vote count (error=${inspect(error)})`,
       );
       await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
-
-    await queryRunner.release();
 
     return {
       fair: voteResult[Bias.FAIR],

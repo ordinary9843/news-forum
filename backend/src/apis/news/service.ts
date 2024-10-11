@@ -11,15 +11,13 @@ import { DateService } from '../../modules/date/service.js';
 import { JsonService } from '../../modules/json/service.js';
 import { RedisService } from '../../modules/redis/service.js';
 
-import { GET_NEWS_LIST_CACHE_TTL, GET_NEWS_LIST_LIMIT } from './constant.js';
+import { GET_NEWS_LIST_LIMIT } from './constant.js';
 import { GetNewsListQuery } from './dto.js';
 import {
   CreateNewsParams,
   CreateNewsResult,
   DoesNewsExistByGuidResult,
   DoesNewsExistResult,
-  GenerateNewsListCacheKeyParams,
-  GenerateNewsListCacheKeyResult,
   GetNewsListResult,
   UpdateNewsByGuidParams,
   UpdateNewsByGuidResult,
@@ -36,15 +34,11 @@ export class NewsService {
   ) {}
 
   async getNewsList(query: GetNewsListQuery): Promise<GetNewsListResult> {
-    const cacheKey = this.generateNewsListCacheKey(query);
-    if (await this.redisService.exists(cacheKey)) {
-      return (
-        this.jsonService.parse(await this.redisService.get(cacheKey)) || []
-      );
-    }
-
     const { page = 1, limit = GET_NEWS_LIST_LIMIT } = query;
     const [items, totalItems] = await this.newsRepository.findAndCount({
+      relations: {
+        voteCounts: true,
+      },
       where: {
         link: Not(IsNull()),
         brief: Not(IsNull()),
@@ -73,17 +67,12 @@ export class NewsService {
             'description',
             'source',
             'publishedAt',
+            'voteCounts',
           ]),
           publishedAt: this.dateService.format(item.publishedAt),
         };
       }),
     };
-
-    await this.redisService.set(
-      cacheKey,
-      this.jsonService.stringify(result),
-      GET_NEWS_LIST_CACHE_TTL,
-    );
 
     return result;
   }
@@ -120,11 +109,5 @@ export class NewsService {
     Object.assign(existingNews, params);
 
     return await this.newsRepository.save(existingNews);
-  }
-
-  private generateNewsListCacheKey(
-    params: GenerateNewsListCacheKeyParams,
-  ): GenerateNewsListCacheKeyResult {
-    return `get_news_list_${this.jsonService.stringify(params)}`;
   }
 }

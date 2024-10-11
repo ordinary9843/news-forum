@@ -18,12 +18,6 @@ export type UpdateNewsByGuidParams = {
   description?: string | null;
 };
 
-export type GenerateNewsListCacheKeyParams = {
-  page: number;
-  limit?: number;
-  category?: Category;
-};
-
 export type GetNewsListResult = PaginatedNews;
 
 export type DoesNewsExistResult = boolean;
@@ -33,5 +27,3 @@ export type DoesNewsExistByGuidResult = boolean;
 export type CreateNewsResult = NewsEntity;
 
 export type UpdateNewsByGuidResult = NewsEntity;
-
-export type GenerateNewsListCacheKeyResult = string;

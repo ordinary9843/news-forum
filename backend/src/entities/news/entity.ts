@@ -5,9 +5,13 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   AfterLoad,
+  OneToMany,
+  Relation,
 } from 'typeorm';
 
 import { TIMESTAMP_PRECISION, DEFAULT_TIMESTAMP } from '../constant.js';
+
+import { NewsVoteCountEntity } from '../news-vote-count/entity.js';
 
 import {
   CATEGORY_ENUM_NAME,
@@ -70,4 +74,7 @@ export class NewsEntity {
     default: () => DEFAULT_TIMESTAMP,
   })
   updatedAt: Date;
+
+  @OneToMany(() => NewsVoteCountEntity, (newsVoteCount) => newsVoteCount.news)
+  voteCounts: Relation<NewsVoteCountEntity[]>;
 }

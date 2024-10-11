@@ -5,10 +5,14 @@ import {
   CreateDateColumn,
   AfterLoad,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  Relation,
 } from 'typeorm';
 
 import { TIMESTAMP_PRECISION, DEFAULT_TIMESTAMP } from '../constant.js';
 
+import { NewsEntity } from '../news/entity.js';
 import { Bias } from '../news-vote/enum.js';
 
 import { NEWS_VOTE_COUNT_TABLE } from './constant.js';
@@ -45,4 +49,8 @@ export class NewsVoteCountEntity {
     default: () => DEFAULT_TIMESTAMP,
   })
   updatedAt: Date;
+
+  @ManyToOne(() => NewsEntity, (news) => news.voteCounts)
+  @JoinColumn({ name: 'news_id', referencedColumnName: 'id' })
+  news: Relation<NewsEntity>;
 }

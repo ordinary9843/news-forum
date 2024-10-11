@@ -1,17 +1,25 @@
+import { inspect } from 'util';
+
 import {
   ArgumentsHost,
   Catch,
   ExceptionFilter,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import _ from 'lodash';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(HttpExceptionFilter.name);
+
   catch(exception: any, host: ArgumentsHost) {
     const response = host.switchToHttp().getResponse();
     const statusCode = this.getStatusCode(exception);
+
+    this.logger.error(inspect(exception));
+
     response
       .status(statusCode)
       .header('Content-Type', 'application/json; charset=utf-8')

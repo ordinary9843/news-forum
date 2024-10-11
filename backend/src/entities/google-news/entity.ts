@@ -7,6 +7,7 @@ import {
   AfterLoad,
   ManyToOne,
   JoinColumn,
+  Relation,
 } from 'typeorm';
 
 import { TIMESTAMP_PRECISION, DEFAULT_TIMESTAMP } from '../constant.js';
@@ -57,5 +58,5 @@ export class GoogleNewsEntity {
 
   @ManyToOne(() => NewsEntity)
   @JoinColumn({ name: 'guid', referencedColumnName: 'guid' })
-  news: NewsEntity;
+  news: Relation<NewsEntity>;
 }
