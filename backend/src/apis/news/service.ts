@@ -17,6 +17,8 @@ import {
   CreateNewsParams,
   CreateNewsResult,
   DoesNewsExistResult,
+  GenerateNewsListCacheKeyParams,
+  GenerateNewsListCacheKeyResult,
   GetNewsListResult,
   UpdateNewsByGuidParams,
   UpdateNewsByGuidResult,
@@ -33,7 +35,7 @@ export class NewsService {
   ) {}
 
   async getNewsList(query: GetNewsListQuery): Promise<GetNewsListResult> {
-    const cacheKey = this.getNewsListCacheKey(query);
+    const cacheKey = this.generateNewsListCacheKey(query);
     if (await this.redisService.exists(cacheKey)) {
       return (
         this.jsonService.parse(await this.redisService.get(cacheKey)) || []
@@ -111,7 +113,9 @@ export class NewsService {
     return await this.newsRepository.save(existingNews);
   }
 
-  private getNewsListCacheKey(query: GetNewsListQuery) {
-    return `get_news_list_${this.jsonService.stringify(query)}`;
+  private generateNewsListCacheKey(
+    params: GenerateNewsListCacheKeyParams,
+  ): GenerateNewsListCacheKeyResult {
+    return `get_news_list_${this.jsonService.stringify(params)}`;
   }
 }

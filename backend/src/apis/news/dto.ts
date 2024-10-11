@@ -1,9 +1,18 @@
 import { HttpStatus } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 
-import { IsInt, IsOptional, IsPositive, Max, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsPositive,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 import { Category, Locale } from '../../entities/news/enum.js';
+import { Bias } from '../../entities/news-vote/enum.js';
 import { ApiResponse } from '../interface.js';
 
 import { GetNewsListResult } from './type.js';
@@ -58,7 +67,7 @@ export class PaginatedNews {
 }
 
 export class GetNewsListQuery {
-  [key: string]: unknown;
+  // TODO: Category
 
   @ApiProperty({ example: 1 })
   @IsInt()
@@ -73,6 +82,23 @@ export class GetNewsListQuery {
   limit?: number;
 }
 
+export class CastVoteBody {
+  @ApiProperty({
+    example: Bias.FAIR,
+  })
+  @IsEnum(Bias)
+  bias: Bias;
+
+  @ApiProperty({
+    example: '192.168.1.1',
+    required: false,
+    readOnly: true,
+  })
+  @IsString()
+  @IsOptional()
+  readonly votedIp?: string;
+}
+
 export class GetNewsListApiOkResponse implements ApiResponse {
   @ApiProperty({ example: true })
   success: boolean;
@@ -85,4 +111,15 @@ export class GetNewsListApiOkResponse implements ApiResponse {
 
   @ApiProperty({ type: PaginatedNews })
   result: GetNewsListResult;
+}
+
+export class CastVoteApiOkResponse implements ApiResponse {
+  @ApiProperty({ example: true })
+  success: boolean;
+
+  @ApiProperty({ example: HttpStatus.OK })
+  statusCode: HttpStatus;
+
+  @ApiProperty({ example: 'Success' })
+  message: string;
 }

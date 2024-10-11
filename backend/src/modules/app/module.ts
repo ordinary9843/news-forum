@@ -3,7 +3,7 @@ import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 import { BullModule } from '@nestjs/bull';
-import { Module, NestModule } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
@@ -19,9 +19,11 @@ import { dataSourceOptions } from '../../configs/typeorm/config.js';
 
 import { HttpExceptionFilter } from '../../filters/http-exception/filter.js';
 import { HttpResponseInterceptor } from '../../interceptors/http-response/interceptor.js';
+import { EnsureIpMiddleware } from '../../middlewares/ensure-ip/middleware.js';
 import { DateModule } from '../date/module.js';
 import { GoogleNewsModule } from '../google-news/module.js';
 import { JsonModule } from '../json/module.js';
+import { NewsVoteModule } from '../news-vote/module.js';
 import { RedisModule } from '../redis/module.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -50,6 +52,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
     DateModule,
     GoogleNewsModule,
     NewsModule,
+    NewsVoteModule,
     JsonModule,
     RedisModule,
     ScheduleModule.forRoot(),
@@ -81,5 +84,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
   ],
 })
 export class AppModule implements NestModule {
-  configure() {}
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(EnsureIpMiddleware).forRoutes('*');
+  }
 }

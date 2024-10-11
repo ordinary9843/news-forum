@@ -59,8 +59,8 @@ export class GoogleNewsService {
   ) {}
 
   async onApplicationBootstrap() {
-    this.processGoogleNews();
-    this.processNews();
+    // this.processGoogleNews();
+    // this.processNews();
   }
 
   async createGoogleNews(
