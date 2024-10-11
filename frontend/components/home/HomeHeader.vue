@@ -7,27 +7,19 @@
       justify="space-between"
     >
       <a-space size="small">
+        <a-button
+          v-if="windowWidth < 750"
+          style="border: none"
+          icon="menu"
+          @click="openDrawerVisible"
+        />
         <!-- logo -->
         <img class="logo" src="@/assets/img/logo.png" alt="" />
         <!-- 網頁標題 -->
         <div class="headerTitle">{{ $t('home.title') }}</div>
       </a-space>
-      <!-- small view navigator -->
-      <a-dropdown v-if="windowWidth < 750">
-        <a-button icon="menu" />
-        <a-menu slot="overlay">
-          <a-menu-item
-            v-for="item in categoryOptions"
-            :key="item.value"
-            :class="[activeCategory === item.value ? 'activeMenu' : '']"
-            @click="changeActiveCategory(item.value)"
-          >
-            {{ item.label }}
-          </a-menu-item>
-        </a-menu>
-      </a-dropdown>
     </a-row>
-    <!-- bigger view navigator -->
+    <!-- big view navigator -->
     <a-row
       v-if="windowWidth >= 750"
       class="headerWith headerNavigator"
@@ -50,6 +42,28 @@
         </div>
       </a-space>
     </a-row>
+    <!-- small view navigator -->
+    <a-drawer
+      :title="$t('home.categories')"
+      placement="left"
+      :closable="false"
+      :visible="drawerVisible"
+      @close="drawerOnClose"
+    >
+      <a-menu
+        style="border: none"
+        :default-selected-keys="[activeCategory]"
+        :mode="'inline'"
+      >
+        <a-menu-item
+          v-for="item in categoryOptions"
+          :key="item.value"
+          @click="changeActiveCategory(item.value)"
+        >
+          {{ item.label }}
+        </a-menu-item>
+      </a-menu>
+    </a-drawer>
   </div>
 </template>
 
@@ -59,12 +73,12 @@ export default {
   name: 'HomeHeader',
   data() {
     return {
-      windowWidth: 0,
       activeCategory: '',
+      drawerVisible: false,
     }
   },
   computed: {
-    ...mapState(['categoryOptions']),
+    ...mapState(['categoryOptions', 'windowWidth']),
   },
   async created() {
     await this.getCategories()
@@ -73,21 +87,18 @@ export default {
       this.getNews({ type: this.categoryOptions[0].value })
     }
   },
-  mounted() {
-    this.setWindowWidth()
-    window.addEventListener('resize', this.setWindowWidth)
-  },
-  beforeDestroy() {
-    window.removeEventListener('resize', this.setWindowWidth)
-  },
+  mounted() {},
   methods: {
     ...mapActions(['getCategories', 'getNews']),
     changeActiveCategory(value) {
       this.activeCategory = value
       this.getNews({ type: value })
     },
-    setWindowWidth() {
-      this.windowWidth = window.innerWidth
+    drawerOnClose() {
+      this.drawerVisible = false
+    },
+    openDrawerVisible() {
+      this.drawerVisible = true
     },
   },
 }
@@ -149,9 +160,5 @@ export default {
       border-top-right-radius: 4px;
     }
   }
-}
-.activeMenu {
-  color: $blue;
-  background-color: $blue-light;
 }
 </style>

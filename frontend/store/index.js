@@ -3,6 +3,7 @@ export const state = () => ({
   selectLanguage: 'zh',
   isLoading: false,
   loadingText: '',
+  windowWidth: 0,
   newsList: [],
   categoryOptions: [],
 })
