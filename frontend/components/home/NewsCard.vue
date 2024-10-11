@@ -3,19 +3,22 @@
     <!-- 標題+按鈕 -->
     <a-row type="flex" align="middle" justify="start">
       <!-- 標題 -->
-      <div class="newsTitle overflow-ellipsis">{{ data.title }}</div>
+      <div class="newsTitle overflow-ellipsis-2" @click="openNews">
+        {{ data.title }}
+      </div>
       <!-- 右側按鈕們 -->
       <a-row
-        v-if="data.shareLink"
+        v-if="data.link"
         class="myButtons"
         type="flex"
         align="middle"
         justify="center"
       >
-        <a-space size="small">
+        <!-- big view share buttons -->
+        <a-space v-if="windowWidth >= 750" size="small">
           <a-button
             class="copyBtn"
-            :data-clipboard-text="data.shareLink"
+            :data-clipboard-text="data.link"
             type="primary"
             size="small"
             icon="link"
@@ -34,10 +37,46 @@
         </a-space>
       </a-row>
     </a-row>
-    <!-- 副標題 -->
-    <div class="newsSubtitle">{{ data.subtitle }}</div>
+    <!-- 副標題 + small view share buttons -->
+    <a-row
+      class="secondLine"
+      type="flex"
+      align="middle"
+      justify="space-between"
+    >
+      <!-- 副標題 -->
+      <div class="newsSubtitle overflow-ellipsis">
+        {{ data.source }} {{ data.publishedAt }}
+      </div>
+      <!-- small view share buttons -->
+      <a-dropdown
+        v-if="windowWidth < 750 && data.link"
+        :trigger="['click']"
+        placement="bottomRight"
+      >
+        <a-icon class="shareIcon" type="share-alt" />
+        <a-menu slot="overlay">
+          <a-menu-item
+            class="copyBtn"
+            :data-clipboard-text="data.link"
+            @click="copyLink"
+          >
+            <a-icon type="link" />
+            {{ $t('home.copyLink') }}
+          </a-menu-item>
+          <a-menu-item @click="shareByLine">
+            <line-icon class="lineIcon" />
+            {{ $t('home.share') }}
+          </a-menu-item>
+          <a-menu-item @click="shareByFb">
+            <fb-icon class="fbIcon" />
+            {{ $t('home.share') }}
+          </a-menu-item>
+        </a-menu>
+      </a-dropdown>
+    </a-row>
     <!-- 內容 -->
-    <div class="newsDescription">{{ data.description }}</div>
+    <div class="newsDescription" @click="openNews">{{ data.description }}</div>
     <!-- 對報導的看法 -->
     <a-row class="myButtons" type="flex" align="middle" justify="start">
       <div class="question">{{ $t('home.mediaReportingImpartiality') }}</div>
@@ -130,12 +169,17 @@ export default {
     }
   },
   computed: {
-    ...mapState(['newsList']),
+    ...mapState(['newsList', 'windowWidth']),
   },
   created() {},
   mounted() {
-    // 初始化剪貼簿套件
-    this.clipboard = new ClipboardJS('.copyBtn')
+    this.$nextTick(() => {
+      // 初始化剪貼簿套件
+      this.clipboard = new ClipboardJS('.copyBtn')
+      this.clipboard.on('success', function (e) {
+        e.clearSelection()
+      })
+    })
   },
   beforeDestroy() {
     this.clipboard.destroy()
@@ -143,13 +187,15 @@ export default {
   },
   methods: {
     ...mapActions(['updateNewsImpartiality']),
+    openNews() {
+      window.open(this.data.link)
+    },
     copyLink() {
-      // navigator.clipboard.writeText(this.data.shareLink)
       this.$message.success(this.$t('home.copySuccessfully'))
     },
     shareByLine() {
       window.open(
-        `https://social-plugins.line.me/lineit/share?url=${this.data.shareLink}`,
+        `https://social-plugins.line.me/lineit/share?url=${this.data.link}`,
         '_blank',
         'width=500,height=500'
       )
@@ -157,7 +203,7 @@ export default {
     shareByFb() {
       window.open(
         `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-          this.data.shareLink
+          this.data.link
         )};src=sdkpreparse`,
         '_blank',
         'width=500,height=500'
@@ -186,6 +232,7 @@ export default {
   font-size: 1.25rem;
   line-height: 1.4;
   margin-bottom: 6px;
+  cursor: pointer;
 }
 .myButtons {
   margin-left: auto;
@@ -195,11 +242,18 @@ export default {
   color: $gray-light;
   font-size: 0.85rem;
   line-height: 1.4;
+  max-width: calc(100% - 24px);
+}
+.secondLine {
   margin-bottom: 10px;
 }
 .newsDescription {
   font-size: 0.95rem;
   margin-bottom: 15px;
+  cursor: pointer;
+}
+.shareIcon {
+  padding: 5px;
 }
 .lineButton {
   background-color: $line-green;
@@ -210,6 +264,9 @@ export default {
     border: 1px solid transparent;
   }
 }
+.lineIcon {
+  color: $line-green;
+}
 .fbButton {
   background-color: $fb-blue;
   color: #ffffff;
@@ -219,12 +276,15 @@ export default {
     border: 1px solid transparent;
   }
 }
+.fbIcon {
+  color: $fb-blue;
+}
 .question {
   margin-bottom: 8px;
+  margin-right: 15px;
 }
 .answerButtons {
   flex-wrap: wrap;
-  margin-left: 15px;
   .ant-space-item {
     margin-bottom: 8px;
   }
