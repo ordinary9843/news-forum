@@ -20,6 +20,7 @@ import { NewsService } from '../../apis/news/service.js';
 import { GoogleNewsEntity } from '../../entities/google-news/entity.js';
 import { CATEGORY_MAPPING } from '../../entities/news/constant.js';
 import { Category, Locale } from '../../entities/news/enum.js';
+import { NewsVoteCountService } from '../news-vote-count/service.js';
 import { PuppeteerService } from '../puppeteer/service.js';
 
 import {
@@ -54,14 +55,14 @@ export class GoogleNewsService {
     @InjectRepository(GoogleNewsEntity)
     readonly googleNewsRepository: Repository<GoogleNewsEntity>,
     private readonly newsService: NewsService,
+    private readonly newsVoteCountService: NewsVoteCountService,
     private readonly puppeteerService: PuppeteerService,
     private dataSource: DataSource,
   ) {}
 
   async onApplicationBootstrap() {
-    // TODO
-    // this.processGoogleNews();
-    // this.processNews();
+    this.processGoogleNews();
+    this.processNews();
   }
 
   async createGoogleNews(
@@ -118,7 +119,7 @@ export class GoogleNewsService {
                   guid,
                   link,
                 });
-                await this.newsService.createNews({
+                const { id } = await this.newsService.createNews({
                   locale,
                   category,
                   guid,
@@ -126,6 +127,7 @@ export class GoogleNewsService {
                   source,
                   publishedAt: pubDate,
                 });
+                await this.newsVoteCountService.initializeVoteCounts(id);
                 this.logger.log(
                   `processGoogleNews(): News has been saved successfully (title=${title})`,
                 );

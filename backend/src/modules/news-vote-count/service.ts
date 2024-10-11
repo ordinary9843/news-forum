@@ -1,15 +1,21 @@
 import { inspect } from 'util';
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import _ from 'lodash';
 import { DataSource, Repository } from 'typeorm';
 
+import { VoteStatistics } from '../../apis/news-vote/dto.js';
 import { Bias } from '../../entities/news-vote/enum.js';
 import { NewsVoteCountEntity } from '../../entities/news-vote-count/entity.js';
 
-import { IncreaseVoteCountParams, IncreaseVoteCountResult } from './type.js';
+import {
+  AnalyzeVoteStatisticsParams,
+  AnalyzeVoteStatisticsResult,
+  IncreaseVoteCountResult,
+  InitializeVoteCountsResult,
+} from './type.js';
 
 @Injectable()
 export class NewsVoteCountService {
@@ -21,9 +27,23 @@ export class NewsVoteCountService {
     private dataSource: DataSource,
   ) {}
 
-  async increaseVoteCount(
-    params: IncreaseVoteCountParams,
-  ): Promise<IncreaseVoteCountResult> {
+  async initializeVoteCounts(
+    newsId: number,
+  ): Promise<InitializeVoteCountsResult> {
+    for (const bias of Object.values(Bias)) {
+      await this.newsVoteCountRepository.save(
+        this.newsVoteCountRepository.create({
+          newsId,
+          bias,
+          count: 0,
+        }),
+      );
+    }
+  }
+
+  async analyzeVoteStatistics(
+    params: AnalyzeVoteStatisticsParams,
+  ): Promise<AnalyzeVoteStatisticsResult> {
     const voteResult = _.mapValues(
       _.keyBy(Object.values(Bias), (bias) => bias),
       () => ({ count: 0, percent: 0 }),
@@ -43,22 +63,13 @@ export class NewsVoteCountService {
         where: { newsId },
       });
       const voteCountMap = _.keyBy(existingVoteCounts, 'bias');
-
-      if (_.has(voteCountMap, bias)) {
-        const existingVoteCount = voteCountMap[bias];
-        existingVoteCount.count += 1;
-        await this.newsVoteCountRepository.save(existingVoteCount);
-      } else {
-        for (const currBias of Object.values(Bias)) {
-          await this.newsVoteCountRepository.save(
-            this.newsVoteCountRepository.create({
-              newsId,
-              bias: currBias,
-              count: currBias === bias ? 1 : 0,
-            }),
-          );
-        }
+      if (!_.has(voteCountMap, bias)) {
+        throw new NotFoundException(
+          `Vote count not found for the specified bias`,
+        );
       }
+
+      await this.increaseVoteCount(voteCountMap[bias]);
 
       const totalVotes = _.sumBy(existingVoteCounts, 'count') + 1;
       _.forEach(existingVoteCounts, ({ bias, count }) => {
@@ -98,5 +109,36 @@ export class NewsVoteCountService {
       heavilyBiased: voteResult[Bias.HEAVILY_BIASED],
       undetermined: voteResult[Bias.UNDETERMINED],
     };
+  }
+
+  private async increaseVoteCount(
+    existingVoteCount: NewsVoteCountEntity,
+  ): Promise<IncreaseVoteCountResult> {
+    existingVoteCount.count += 1;
+    await this.newsVoteCountRepository.save(existingVoteCount);
+  }
+
+  private calculateVotePercentages(
+    voteResult: VoteStatistics,
+    voteCounts: NewsVoteCountEntity[],
+  ) {
+    const totalVotes = _.sumBy(voteCounts, 'count') + 1;
+    _.forEach(voteCounts, ({ bias, count }) => {
+      const percent = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
+      voteResult[bias] = {
+        count,
+        percent: parseFloat(percent.toFixed(0)),
+      };
+    });
+
+    const totalPercent = _.sumBy(
+      voteCounts,
+      ({ bias }) => voteResult[bias].percent,
+    );
+    if (totalPercent !== 100) {
+      const adjustment = 100 - totalPercent;
+      const maxVoteCountBias = _.maxBy(voteCounts, 'count').bias;
+      voteResult[maxVoteCountBias].percent += adjustment;
+    }
   }
 }

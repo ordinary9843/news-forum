@@ -8,9 +8,6 @@ import { NewsEntity } from '../../entities/news/entity.js';
 
 import { DateService } from '../../modules/date/service.js';
 
-import { JsonService } from '../../modules/json/service.js';
-import { RedisService } from '../../modules/redis/service.js';
-
 import { GET_NEWS_LIST_LIMIT } from './constant.js';
 import { GetNewsListQuery } from './dto.js';
 import {
@@ -29,8 +26,6 @@ export class NewsService {
     @InjectRepository(NewsEntity)
     readonly newsRepository: Repository<NewsEntity>,
     private readonly dateService: DateService,
-    private readonly redisService: RedisService,
-    private readonly jsonService: JsonService,
   ) {}
 
   async getNewsList(query: GetNewsListQuery): Promise<GetNewsListResult> {

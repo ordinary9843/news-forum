@@ -7,20 +7,20 @@ import { Bias } from '../../entities/news-vote/enum.js';
 
 import { ApiResponse } from '../interface.js';
 
-import { CastVoteResult, NewsVoteCount } from './type.js';
+import { CastVoteResult, VoteMetrics } from './type.js';
 
-export class NewsVoteCounts {
+export class VoteStatistics {
   @ApiProperty({ example: { count: 5, percent: 9 } })
-  fair: NewsVoteCount;
+  fair: VoteMetrics;
 
   @ApiProperty({ example: { count: 10, percent: 19 } })
-  slightlyBiased: NewsVoteCount;
+  slightlyBiased: VoteMetrics;
 
   @ApiProperty({ example: { count: 33, percent: 64 } })
-  heavilyBiased: NewsVoteCount;
+  heavilyBiased: VoteMetrics;
 
   @ApiProperty({ example: { count: 4, percent: 8 } })
-  undetermined: NewsVoteCount;
+  undetermined: VoteMetrics;
 }
 
 export class CastVoteBody {
@@ -50,7 +50,7 @@ export class CastVoteApiOkResponse implements ApiResponse {
   @ApiProperty({ example: 'Success' })
   message: string;
 
-  @ApiProperty({ type: NewsVoteCounts })
+  @ApiProperty({ type: VoteStatistics })
   result: CastVoteResult;
 }
 

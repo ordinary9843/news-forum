@@ -1,8 +1,8 @@
 import { Bias } from '../../entities/news-vote/enum.js';
 
-import { NewsVoteCounts } from './dto.js';
+import { VoteStatistics } from './dto.js';
 
-export type NewsVoteCount = {
+export type VoteMetrics = {
   count: number;
   percent: number;
 };
@@ -25,6 +25,6 @@ export type GenerateCastVoteCacheKeyParams = {
 
 export type DoesNewsVoteExistResult = boolean;
 
-export type CastVoteResult = NewsVoteCounts;
+export type CastVoteResult = VoteStatistics;
 
 export type GenerateCastVoteCacheKeyResult = string;
