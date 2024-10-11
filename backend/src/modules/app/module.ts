@@ -23,7 +23,7 @@ import { EnsureIpMiddleware } from '../../middlewares/ensure-ip/middleware.js';
 import { DateModule } from '../date/module.js';
 import { GoogleNewsModule } from '../google-news/module.js';
 import { JsonModule } from '../json/module.js';
-import { NewsVoteModule } from '../news-vote/module.js';
+
 import { RedisModule } from '../redis/module.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -52,7 +52,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
     DateModule,
     GoogleNewsModule,
     NewsModule,
-    NewsVoteModule,
     JsonModule,
     RedisModule,
     ScheduleModule.forRoot(),
@@ -65,7 +64,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
       }),
     }),
     ThrottlerModule.forRoot({
-      errorMessage: 'Too Many Requests',
+      errorMessage: 'Too many requests',
       throttlers: [
         {
           ttl: 60000,

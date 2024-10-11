@@ -13,6 +13,8 @@ import {
 
 import { Category, Locale } from '../../entities/news/enum.js';
 import { Bias } from '../../entities/news-vote/enum.js';
+import { NewsVoteCounts } from '../../modules/news-vote/dto.js';
+import { CastVoteResult } from '../../modules/news-vote/type.js';
 import { ApiResponse } from '../interface.js';
 
 import { GetNewsListResult } from './type.js';
@@ -67,8 +69,6 @@ export class PaginatedNews {
 }
 
 export class GetNewsListQuery {
-  // TODO: Category
-
   @ApiProperty({ example: 1 })
   @IsInt()
   @IsPositive()
@@ -80,6 +80,11 @@ export class GetNewsListQuery {
   @Max(50)
   @IsOptional()
   limit?: number;
+
+  @ApiProperty({ example: Category.BUSINESS })
+  @IsEnum(Category)
+  @IsOptional()
+  category?: Category;
 }
 
 export class CastVoteBody {
@@ -113,6 +118,17 @@ export class GetNewsListApiOkResponse implements ApiResponse {
   result: GetNewsListResult;
 }
 
+export class GetNewsListApiTooManyRequestsResponse implements ApiResponse {
+  @ApiProperty({ example: false })
+  success: boolean;
+
+  @ApiProperty({ example: HttpStatus.TOO_MANY_REQUESTS })
+  statusCode: HttpStatus;
+
+  @ApiProperty({ example: 'Too many requests' })
+  message: string;
+}
+
 export class CastVoteApiOkResponse implements ApiResponse {
   @ApiProperty({ example: true })
   success: boolean;
@@ -121,5 +137,30 @@ export class CastVoteApiOkResponse implements ApiResponse {
   statusCode: HttpStatus;
 
   @ApiProperty({ example: 'Success' })
+  message: string;
+
+  @ApiProperty({ type: NewsVoteCounts })
+  result: CastVoteResult;
+}
+
+export class CastVoteApiBadRequestResponse implements ApiResponse {
+  @ApiProperty({ example: false })
+  success: boolean;
+
+  @ApiProperty({ example: HttpStatus.BAD_REQUEST })
+  statusCode: HttpStatus;
+
+  @ApiProperty({ example: 'Vote has already been cast for this news' })
+  message: string;
+}
+
+export class CastVoteApiTooManyRequestsResponse implements ApiResponse {
+  @ApiProperty({ example: false })
+  success: boolean;
+
+  @ApiProperty({ example: HttpStatus.TOO_MANY_REQUESTS })
+  statusCode: HttpStatus;
+
+  @ApiProperty({ example: 'Too many requests' })
   message: string;
 }

@@ -4,12 +4,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { NewsVoteEntity } from '../../entities/news-vote/entity.js';
 
-import { NewsVoteCountEntity } from '../../entities/news-vote-count/entity.js';
+import { NewsVoteCountModule } from '../news-vote-count/module.js';
 
 import { NewsVoteService } from './service.js';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([NewsVoteEntity, NewsVoteCountEntity])],
+  imports: [NewsVoteCountModule, TypeOrmModule.forFeature([NewsVoteEntity])],
   providers: [NewsVoteService],
   exports: [NewsVoteService],
 })

@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import { NewsVoteEntity } from '../../entities/news-vote/entity.js';
 
 import { JsonService } from '../json/service.js';
+import { NewsVoteCountService } from '../news-vote-count/service.js';
 import { RedisService } from '../redis/service.js';
 
 import { CAST_VOTE_CACHE_TTL } from './constant.js';
@@ -23,6 +24,7 @@ export class NewsVoteService {
   constructor(
     @InjectRepository(NewsVoteEntity)
     readonly newsVoteRepository: Repository<NewsVoteEntity>,
+    private readonly newsVoteCountService: NewsVoteCountService,
     private readonly redisService: RedisService,
     private readonly jsonService: JsonService,
   ) {}
@@ -45,6 +47,11 @@ export class NewsVoteService {
         votedIp,
       }),
     );
+
+    return await this.newsVoteCountService.increaseVoteCount({
+      newsId,
+      bias,
+    });
   }
 
   async doesNewsVoteExist(
@@ -56,7 +63,7 @@ export class NewsVoteService {
       return true;
     }
 
-    const newsVoteExists =
+    const doesNewsVoteExist =
       (await this.newsVoteRepository.count({
         where: {
           newsId,
@@ -64,9 +71,13 @@ export class NewsVoteService {
         },
       })) > 0;
 
-    await this.redisService.set(cacheKey, newsVoteExists, CAST_VOTE_CACHE_TTL);
+    await this.redisService.set(
+      cacheKey,
+      doesNewsVoteExist,
+      CAST_VOTE_CACHE_TTL,
+    );
 
-    return newsVoteExists;
+    return doesNewsVoteExist;
   }
 
   private generateCastVoteCacheKey(

@@ -7,7 +7,14 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiOkResponse,
+  ApiTags,
+  ApiTooManyRequestsResponse,
+} from '@nestjs/swagger';
+
+import { Throttle } from '@nestjs/throttler';
 
 import { NewsVoteService } from '../../modules/news-vote/service.js';
 
@@ -16,16 +23,19 @@ import { CastVoteResult } from '../../modules/news-vote/type.js';
 import { Request } from '../interface';
 
 import {
+  CastVoteApiBadRequestResponse,
   CastVoteApiOkResponse,
+  CastVoteApiTooManyRequestsResponse,
   CastVoteBody,
   GetNewsListApiOkResponse,
+  GetNewsListApiTooManyRequestsResponse,
   GetNewsListQuery,
 } from './dto.js';
 import { NewsService } from './service.js';
 import { GetNewsListResult } from './type.js';
 
 @Controller('news')
-@ApiTags(NewsController.name)
+@ApiTags('News')
 export class NewsController {
   constructor(
     private readonly newsService: NewsService,
@@ -35,6 +45,9 @@ export class NewsController {
   @ApiOkResponse({
     type: GetNewsListApiOkResponse,
   })
+  @ApiTooManyRequestsResponse({
+    type: GetNewsListApiTooManyRequestsResponse,
+  })
   @Get('/')
   async getItems(@Query() query: GetNewsListQuery): Promise<GetNewsListResult> {
     return await this.newsService.getNewsList(query);
@@ -43,6 +56,13 @@ export class NewsController {
   @ApiOkResponse({
     type: CastVoteApiOkResponse,
   })
+  @ApiBadRequestResponse({
+    type: CastVoteApiBadRequestResponse,
+  })
+  @ApiTooManyRequestsResponse({
+    type: CastVoteApiTooManyRequestsResponse,
+  })
+  @Throttle({ default: { limit: 1, ttl: 60000 } })
   @Patch('/:id/vote')
   async castVote(
     @Req() request: Request,
