@@ -13,6 +13,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { NewsModule } from '../../apis/news/module.js';
+import { NewsCategoryModule } from '../../apis/news-category/module.js';
 import { NewsVoteModule } from '../../apis/news-vote/module.js';
 import PuppeteerConfig from '../../configs/puppeteer/config.js';
 import RedisConfig from '../../configs/redis/config.js';
@@ -52,6 +53,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
     }),
     DateModule,
     GoogleNewsModule,
+    NewsCategoryModule,
     NewsModule,
     NewsVoteModule,
     JsonModule,
