@@ -46,12 +46,23 @@ export default {
   created() {
     this.$i18n.setLocale(this.mySelectLanguage)
   },
-  mounted() {},
-  beforeDestroy() {},
+  mounted() {
+    this.setWindowWidth()
+    window.addEventListener('resize', this.setWindowWidth)
+  },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.setWindowWidth)
+  },
   methods: {
     ...mapMutations(['SET_INDEX']),
     changeLanguage(value) {
       this.$i18n.setLocale(value)
+    },
+    setWindowWidth() {
+      this.SET_INDEX({
+        key: 'windowWidth',
+        val: window.innerWidth,
+      })
     },
   },
 }
@@ -62,9 +73,9 @@ export default {
   min-height: 100vh;
   height: auto;
   position: relative;
-  color: rgba(0, 0, 0, .87);
+  color: rgba(0, 0, 0, 0.87);
   background-color: $page-bg;
-  font-family: "Google Sans", sans-serif;
+  font-family: 'Google Sans', sans-serif;
 }
 .versionText {
   margin-right: 15px;
