@@ -13,6 +13,8 @@ import {
 import { Category, Locale } from '../../entities/news/enum.js';
 import { ApiResponse } from '../interface.js';
 
+import { VoteStatistics } from '../news-vote/dto.js';
+
 import { GetNewsListResult } from './type.js';
 
 export class Item {
@@ -45,6 +47,9 @@ export class Item {
 
   @ApiProperty({ example: '2024-10-10 09:36:48' })
   publishedAt: string;
+
+  @ApiProperty({ type: VoteStatistics })
+  voteStatistics: VoteStatistics;
 }
 
 export class PaginatedNews {

@@ -6,13 +6,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import _ from 'lodash';
 import { DataSource, Repository } from 'typeorm';
 
-import { VoteStatistics } from '../../apis/news-vote/dto.js';
 import { Bias } from '../../entities/news-vote/enum.js';
 import { NewsVoteCountEntity } from '../../entities/news-vote-count/entity.js';
 
 import {
-  AnalyzeVoteStatisticsParams,
-  AnalyzeVoteStatisticsResult,
+  CalculateVoteStatisticsParams,
+  CalculateVoteStatisticsResult,
+  FormatBiasResult,
   IncreaseVoteCountResult,
   InitializeVoteCountsResult,
 } from './type.js';
@@ -41,13 +41,9 @@ export class NewsVoteCountService {
     }
   }
 
-  async analyzeVoteStatistics(
-    params: AnalyzeVoteStatisticsParams,
-  ): Promise<AnalyzeVoteStatisticsResult> {
-    const voteResult = _.mapValues(
-      _.keyBy(Object.values(Bias), (bias) => bias),
-      () => ({ count: 0, percent: 0 }),
-    );
+  async calculateVoteStatistics(
+    params: CalculateVoteStatisticsParams,
+  ): Promise<CalculateVoteStatisticsResult> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -62,83 +58,97 @@ export class NewsVoteCountService {
       const existingVoteCounts = await this.newsVoteCountRepository.find({
         where: { newsId },
       });
-      const voteCountMap = _.keyBy(existingVoteCounts, 'bias');
-      if (!_.has(voteCountMap, bias)) {
+      const currentVoteCount = _.find(existingVoteCounts, {
+        bias,
+      });
+      if (!currentVoteCount) {
         throw new NotFoundException(
-          `Vote count not found for the specified bias`,
+          `Vote count not found for the specified bias "${bias}"`,
         );
       }
 
-      await this.increaseVoteCount(voteCountMap[bias]);
-
-      const totalVotes = _.sumBy(existingVoteCounts, 'count') + 1;
-      _.forEach(existingVoteCounts, ({ bias, count }) => {
-        const percent = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
-        voteResult[bias] = {
-          count,
-          percent: parseFloat(percent.toFixed(0)),
-        };
-      });
-
-      const totalPercent = _.sumBy(
-        existingVoteCounts,
-        ({ bias }) => voteResult[bias].percent,
-      );
-      if (totalPercent !== 100) {
-        const adjustment = 100 - totalPercent;
-        const maxVoteCountBias = _.maxBy(existingVoteCounts, 'count').bias;
-        voteResult[maxVoteCountBias].percent += adjustment;
-      }
+      await this.increaseVoteCount(currentVoteCount);
+      const voteStatistics = this.calculateVotePercentages(existingVoteCounts);
 
       this.logger.log(
         `increaseVoteCount(): Successfully updated vote count (newsId=${newsId})`,
       );
       await queryRunner.commitTransaction();
+
+      return voteStatistics;
     } catch (error) {
       this.logger.error(
         `increaseVoteCount(): Failed to update vote count (error=${inspect(error)})`,
       );
       await queryRunner.rollbackTransaction();
+      throw error;
     } finally {
       await queryRunner.release();
     }
+  }
 
-    return {
-      fair: voteResult[Bias.FAIR],
-      slightlyBiased: voteResult[Bias.SLIGHTLY_BIASED],
-      heavilyBiased: voteResult[Bias.HEAVILY_BIASED],
-      undetermined: voteResult[Bias.UNDETERMINED],
+  calculateVotePercentages(
+    voteCounts: NewsVoteCountEntity[],
+  ): CalculateVoteStatisticsResult {
+    const voteStatistics = {
+      fair: {
+        count: 0,
+        percent: 0,
+      },
+      slightlyBiased: {
+        count: 0,
+        percent: 0,
+      },
+      heavilyBiased: {
+        count: 0,
+        percent: 0,
+      },
+      undetermined: {
+        count: 0,
+        percent: 0,
+      },
     };
+    const totalVotes = _.sumBy(voteCounts, 'count');
+    if (totalVotes === 0) {
+      return voteStatistics;
+    }
+
+    _.forEach(voteCounts, ({ bias, count }) => {
+      const percent = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
+      const formattedBias = this.formatBias(bias);
+      if (!_.has(voteStatistics, formattedBias)) {
+        throw new NotFoundException(
+          `Bias "${formattedBias}" not found in voteStatistics`,
+        );
+      }
+
+      voteStatistics[formattedBias] = {
+        count,
+        percent: _.toNumber(percent.toFixed(0)),
+      };
+    });
+    const totalPercent = _.sumBy(
+      voteCounts,
+      ({ bias }) => voteStatistics[this.formatBias(bias)].percent,
+    );
+    if (totalPercent !== 100) {
+      const maxVoteCountBias = this.formatBias(
+        _.maxBy(voteCounts, 'count').bias,
+      );
+      voteStatistics[maxVoteCountBias].percent += 100 - totalPercent;
+    }
+
+    return voteStatistics;
   }
 
   private async increaseVoteCount(
-    existingVoteCount: NewsVoteCountEntity,
+    voteCount: NewsVoteCountEntity,
   ): Promise<IncreaseVoteCountResult> {
-    existingVoteCount.count += 1;
-    await this.newsVoteCountRepository.save(existingVoteCount);
+    voteCount.count += 1;
+    await this.newsVoteCountRepository.save(voteCount);
   }
 
-  private calculateVotePercentages(
-    voteResult: VoteStatistics,
-    voteCounts: NewsVoteCountEntity[],
-  ) {
-    const totalVotes = _.sumBy(voteCounts, 'count') + 1;
-    _.forEach(voteCounts, ({ bias, count }) => {
-      const percent = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
-      voteResult[bias] = {
-        count,
-        percent: parseFloat(percent.toFixed(0)),
-      };
-    });
-
-    const totalPercent = _.sumBy(
-      voteCounts,
-      ({ bias }) => voteResult[bias].percent,
-    );
-    if (totalPercent !== 100) {
-      const adjustment = 100 - totalPercent;
-      const maxVoteCountBias = _.maxBy(voteCounts, 'count').bias;
-      voteResult[maxVoteCountBias].percent += adjustment;
-    }
+  private formatBias(bias: Bias): FormatBiasResult {
+    return _.camelCase(bias);
   }
 }

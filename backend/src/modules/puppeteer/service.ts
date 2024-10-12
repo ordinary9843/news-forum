@@ -56,7 +56,6 @@ export class PuppeteerService {
       this.logger.error(
         `openBrowserPage(): Current browser status (error=${inspect(error)})`,
       );
-
       throw error;
     } finally {
       release();

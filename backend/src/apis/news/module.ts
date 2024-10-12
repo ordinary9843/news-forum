@@ -4,11 +4,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { NewsEntity } from '../../entities/news/entity.js';
 
+import { NewsVoteCountModule } from '../../modules/news-vote-count/module.js';
+
 import { NewsController } from './controller.js';
 import { NewsService } from './service.js';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([NewsEntity])],
+  imports: [NewsVoteCountModule, TypeOrmModule.forFeature([NewsEntity])],
   controllers: [NewsController],
   providers: [NewsService],
   exports: [NewsService],

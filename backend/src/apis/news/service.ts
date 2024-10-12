@@ -8,6 +8,8 @@ import { NewsEntity } from '../../entities/news/entity.js';
 
 import { DateService } from '../../modules/date/service.js';
 
+import { NewsVoteCountService } from '../../modules/news-vote-count/service.js';
+
 import { GET_NEWS_LIST_LIMIT } from './constant.js';
 import { GetNewsListQuery } from './dto.js';
 import {
@@ -25,6 +27,7 @@ export class NewsService {
   constructor(
     @InjectRepository(NewsEntity)
     readonly newsRepository: Repository<NewsEntity>,
+    private readonly newsVoteCountService: NewsVoteCountService,
     private readonly dateService: DateService,
   ) {}
 
@@ -45,12 +48,16 @@ export class NewsService {
         publishedAt: 'DESC',
       },
     });
-    const result = {
+
+    return {
       totalItems,
       totalPages: Math.ceil(totalItems / limit),
       pageSize: items.length,
       page: page,
       items: _.map(items, (item) => {
+        const { publishedAt, voteCounts } = item;
+        _.unset(item, 'voteCounts');
+
         return {
           ..._.pick(item, [
             'id',
@@ -64,12 +71,12 @@ export class NewsService {
             'publishedAt',
             'voteCounts',
           ]),
-          publishedAt: this.dateService.format(item.publishedAt),
+          publishedAt: this.dateService.format(publishedAt),
+          voteStatistics:
+            this.newsVoteCountService.calculateVotePercentages(voteCounts),
         };
       }),
     };
-
-    return result;
   }
 
   async doesNewsExist(id: number): Promise<DoesNewsExistResult> {

@@ -57,7 +57,7 @@ export class NewsVoteService {
       }),
     );
 
-    return await this.newsVoteCountService.analyzeVoteStatistics({
+    return await this.newsVoteCountService.calculateVoteStatistics({
       newsId,
       bias,
     });
