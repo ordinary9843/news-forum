@@ -54,7 +54,7 @@ export class PuppeteerService {
       return page;
     } catch (error) {
       this.logger.error(
-        `openBrowserPage(): Current browser status (error=${inspect(error)})`,
+        `openBrowserPage(): Failed to open page (error=${inspect(error)})`,
       );
       throw error;
     } finally {
