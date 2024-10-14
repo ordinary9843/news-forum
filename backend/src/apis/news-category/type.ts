@@ -1,4 +1,7 @@
 export type GetNewsCategoriesResult = {
   totalCategories: number;
-  categories: Record<string, string>;
+  categories: {
+    key: string;
+    label: string;
+  }[];
 };

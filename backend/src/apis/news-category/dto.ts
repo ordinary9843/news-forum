@@ -11,17 +11,44 @@ export class CategoryOverview {
   totalCategories: number;
 
   @ApiProperty({
-    example: {
-      [Category.BUSINESS]: '商業',
-      [Category.ENTERTAINMENT]: '娛樂',
-      [Category.SPOTS]: '體育',
-      [Category.TECHNOLOGY]: '科技',
-      [Category.FINANCE]: '財經',
-      [Category.POLITICS]: '政治',
-      [Category.HEALTH]: '健康',
-      [Category.PET]: '寵物',
-      [Category.GLOBAL]: '國際',
-    },
+    example: [
+      {
+        key: Category.BUSINESS,
+        label: '商業',
+      },
+      {
+        key: Category.ENTERTAINMENT,
+        label: '娛樂',
+      },
+      {
+        key: Category.SPOTS,
+        label: '體育',
+      },
+      {
+        key: Category.TECHNOLOGY,
+        label: '科技',
+      },
+      {
+        key: Category.FINANCE,
+        label: '財經',
+      },
+      {
+        key: Category.POLITICS,
+        label: '政治',
+      },
+      {
+        key: Category.HEALTH,
+        label: '健康',
+      },
+      {
+        key: Category.PET,
+        label: '寵物',
+      },
+      {
+        key: Category.GLOBAL,
+        label: '國際',
+      },
+    ],
   })
   categories: Record<string, string>;
 }

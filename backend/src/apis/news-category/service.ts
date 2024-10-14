@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
+import _ from 'lodash';
+
 import { Category } from '../../entities/news/enum.js';
 
 import { GetNewsCategoriesResult } from './type.js';
@@ -7,7 +9,7 @@ import { GetNewsCategoriesResult } from './type.js';
 @Injectable()
 export class NewsCategoryService {
   async getNewsCategories(): Promise<GetNewsCategoriesResult> {
-    const categories = {
+    const categoryMapping = {
       [Category.BUSINESS]: '商業',
       [Category.ENTERTAINMENT]: '娛樂',
       [Category.SPOTS]: '體育',
@@ -18,9 +20,15 @@ export class NewsCategoryService {
       [Category.PET]: '寵物',
       [Category.GLOBAL]: '國際',
     };
+    const categories = _.map(categoryMapping, (label, key) => {
+      return {
+        key,
+        label,
+      };
+    });
 
     return {
-      totalCategories: Object.keys(categories).length,
+      totalCategories: categories.length,
       categories,
     };
   }
