@@ -5,6 +5,11 @@ News aggregator and provide news API
 - Git
 - Docker
 
+### Environment
+
+- Node.js: `20.18.0`
+- PostgreSQL: `17.0`
+
 ## Optional
 - pgAdmin
 
