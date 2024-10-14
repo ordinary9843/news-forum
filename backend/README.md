@@ -15,8 +15,6 @@ News aggregator and provide news API
 - Fill in the following information in `.env`:
 - **App:**
   - SERVER_MODE: `DEV`
-- **Chrome:**
-  - BIN_PATH: `/usr/bin/chromium`
 - **PostgreSQL:**
   - TYPEORM_HOST: `postgres`
   - TYPEORM_USERNAME: `root`
