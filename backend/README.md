@@ -5,7 +5,7 @@ News aggregator and provide news API
 - Git
 - Docker
 
-### Environment
+## Environment
 
 - Node.js: `20.18.0`
 - PostgreSQL: `17.0`
@@ -25,7 +25,7 @@ News aggregator and provide news API
   - TYPEORM_USERNAME: `root`
   - TYPEORM_PASSWORD: `DWif&&pdZN*2eyXh`
 - **Redis:**
-  - REDIS_HOST: `postgres`
+  - REDIS_HOST: `redis`
   - REDIS_PASSWORD: `DWif&&pdZN*2eyXh`
 - Start setting up Docker: `docker-compose up -d`
 - Try to browse: `http://localhost/api/docs`
