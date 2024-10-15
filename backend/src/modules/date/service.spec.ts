@@ -1,16 +1,16 @@
 // npm run test -- ./src/modules/date/service.spec.ts
 
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 
 import { DateService } from './service';
 
-const date: Date = new Date(2024, 1, 1, 13, 14, 15);
+const date = new Date(2024, 1, 1, 13, 14, 15);
 
 describe('DateService', () => {
   let dateService: DateService;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    const module = await Test.createTestingModule({
       providers: [DateService],
     }).compile();
     dateService = module.get<DateService>(DateService);
