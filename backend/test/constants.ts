@@ -3,7 +3,7 @@ import { EntityClassOrSchema } from '@nestjs/typeorm/dist/interfaces/entity-clas
 import Redis from 'ioredis';
 
 import _ from 'lodash';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 import { RedisService } from '../src/modules/redis/service.js';
 
@@ -17,6 +17,19 @@ export const MOCK_REDIS_CLIENT = {
 export const MOCK_REDIS_SERVICE = {
   provide: RedisService,
   useValue: MOCK_REDIS_CLIENT,
+};
+
+export const MOCK_DATA_SOURCE = {
+  provide: DataSource,
+  useFactory: () => ({
+    createQueryRunner: jest.fn().mockReturnValue({
+      connect: jest.fn(),
+      startTransaction: jest.fn(),
+      commitTransaction: jest.fn(),
+      rollbackTransaction: jest.fn(),
+      release: jest.fn(),
+    }),
+  }),
 };
 
 export const MOCK_REPOSITORIES = (entities: EntityClassOrSchema[]) => {

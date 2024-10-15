@@ -23,8 +23,8 @@ export class NewsVoteCountService {
 
   constructor(
     @InjectRepository(NewsVoteCountEntity)
-    readonly newsVoteCountRepository: Repository<NewsVoteCountEntity>,
-    private dataSource: DataSource,
+    private readonly newsVoteCountRepository: Repository<NewsVoteCountEntity>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async initializeVoteCounts(

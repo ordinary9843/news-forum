@@ -53,11 +53,11 @@ export class GoogleNewsService {
 
   constructor(
     @InjectRepository(GoogleNewsEntity)
-    readonly googleNewsRepository: Repository<GoogleNewsEntity>,
+    private readonly googleNewsRepository: Repository<GoogleNewsEntity>,
     private readonly newsService: NewsService,
     private readonly newsVoteCountService: NewsVoteCountService,
     private readonly puppeteerService: PuppeteerService,
-    private dataSource: DataSource,
+    private readonly dataSource: DataSource,
   ) {}
 
   async onApplicationBootstrap() {
