@@ -8,6 +8,6 @@ export type ClosePageResult = void;
 
 export type GetBrowserResult = Browser | null;
 
-export type CreateBrowserResult = Browser;
-
 export type CloseAllPagesResult = void;
+
+export type CreateBrowserResult = Browser;

@@ -36,6 +36,14 @@ export class PuppeteerService {
     await this.closeBrowser(this.browser);
   }
 
+  async getBrowser(): Promise<GetBrowserResult> {
+    if (!this.browser) {
+      this.browser = await this.createBrowser();
+    }
+
+    return this.browser;
+  }
+
   async openPage(): Promise<OpenPageResult> {
     const release = await this.mutex.acquire();
 
@@ -59,6 +67,35 @@ export class PuppeteerService {
       throw error;
     } finally {
       release();
+    }
+  }
+
+  async closePage(
+    page: Page,
+    retryCount: number = CLOSE_PAGE_RETRY_COUNT,
+  ): Promise<ClosePageResult> {
+    if (!page) {
+      this.logger.verbose(`closePage(): Page does not exist`);
+      return;
+    }
+
+    try {
+      await page.close();
+    } catch (error) {
+      if (retryCount > 0) {
+        this.logger.error(
+          `closePage(): Retrying ... (retryCount=${
+            CLOSE_PAGE_RETRY_COUNT - retryCount + 1
+          }, error=${inspect(error)})`,
+        );
+        await this.closePage(page, retryCount - 1);
+      } else {
+        this.logger.error(
+          `closePage(): Failed after multiple retries  (error=${inspect(
+            error,
+          )})`,
+        );
+      }
     }
   }
 
@@ -106,58 +143,7 @@ export class PuppeteerService {
     }
   }
 
-  async closePage(
-    page: Page,
-    retryCount: number = CLOSE_PAGE_RETRY_COUNT,
-  ): Promise<ClosePageResult> {
-    if (!page) {
-      this.logger.verbose(`closePage(): Page does not exist`);
-      return;
-    }
-
-    try {
-      await page.close();
-    } catch (error) {
-      if (retryCount > 0) {
-        this.logger.error(
-          `closePage(): Retrying ... (retryCount=${
-            CLOSE_PAGE_RETRY_COUNT - retryCount + 1
-          }, error=${inspect(error)})`,
-        );
-        await this.closePage(page, retryCount - 1);
-      } else {
-        this.logger.error(
-          `closePage(): Failed after multiple retries  (error=${inspect(
-            error,
-          )})`,
-        );
-      }
-    }
-  }
-
-  private async getBrowser(): Promise<GetBrowserResult> {
-    if (!this.browser) {
-      this.browser = await this.createBrowser();
-    }
-
-    return this.browser;
-  }
-
-  private async createBrowser(): Promise<CreateBrowserResult> {
-    return await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-extensions',
-        '--disable-notifications',
-        '--disable-infobars',
-      ],
-      ...(this.binPath && { executablePath: this.binPath }),
-    });
-  }
-
-  private async closeAllPages(browser: Browser): Promise<CloseAllPagesResult> {
+  async closeAllPages(browser: Browser): Promise<CloseAllPagesResult> {
     try {
       const pages = await browser.pages();
       await Bluebird.map(
@@ -172,5 +158,19 @@ export class PuppeteerService {
         )})`,
       );
     }
+  }
+
+  private async createBrowser(): Promise<CreateBrowserResult> {
+    return await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-extensions',
+        '--disable-notifications',
+        '--disable-infobars',
+      ],
+      ...(this.binPath && { executablePath: this.binPath }),
+    });
   }
 }
