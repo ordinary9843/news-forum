@@ -48,6 +48,9 @@ export class Item {
   @ApiProperty({ example: '2024-10-10 09:36:48' })
   publishedAt: string;
 
+  @ApiProperty({ example: false })
+  isVoted: boolean;
+
   @ApiProperty({ type: VoteStatistics })
   voteStatistics: VoteStatistics;
 }

@@ -4,9 +4,14 @@ import {
   Column,
   CreateDateColumn,
   AfterLoad,
+  OneToOne,
+  JoinColumn,
+  Relation,
 } from 'typeorm';
 
 import { TIMESTAMP_PRECISION, DEFAULT_TIMESTAMP } from '../constant.js';
+
+import { NewsEntity } from '../news/entity.js';
 
 import { BIAS_ENUM_NAME, NEWS_VOTE_TABLE } from './constant.js';
 import { Bias } from './enum.js';
@@ -39,4 +44,8 @@ export class NewsVoteEntity {
     default: () => DEFAULT_TIMESTAMP,
   })
   createdAt: Date;
+
+  @OneToOne(() => NewsEntity, (news) => news.vote)
+  @JoinColumn({ name: 'news_id', referencedColumnName: 'id' })
+  news: Relation<NewsEntity>;
 }

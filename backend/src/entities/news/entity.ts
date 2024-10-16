@@ -7,10 +7,12 @@ import {
   AfterLoad,
   OneToMany,
   Relation,
+  OneToOne,
 } from 'typeorm';
 
 import { TIMESTAMP_PRECISION, DEFAULT_TIMESTAMP } from '../constant.js';
 
+import { NewsVoteEntity } from '../news-vote/entity.js';
 import { NewsVoteCountEntity } from '../news-vote-count/entity.js';
 
 import {
@@ -74,6 +76,9 @@ export class NewsEntity {
     default: () => DEFAULT_TIMESTAMP,
   })
   updatedAt: Date;
+
+  @OneToOne(() => NewsVoteEntity, (newsVote) => newsVote.news)
+  vote: Relation<NewsVoteEntity>;
 
   @OneToMany(() => NewsVoteCountEntity, (newsVoteCount) => newsVoteCount.news)
   voteCounts: Relation<NewsVoteCountEntity[]>;

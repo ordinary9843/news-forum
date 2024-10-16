@@ -35,6 +35,7 @@ export class NewsService {
     const { page = 1, limit = GET_NEWS_LIST_LIMIT, category } = query;
     const [items, totalItems] = await this.newsRepository.findAndCount({
       relations: {
+        vote: true,
         voteCounts: true,
       },
       where: {
@@ -56,7 +57,8 @@ export class NewsService {
       pageSize: items.length,
       page: page,
       items: _.map(items, (item) => {
-        const { publishedAt, voteCounts } = item;
+        const { publishedAt, vote, voteCounts } = item;
+        _.unset(item, 'vote');
         _.unset(item, 'voteCounts');
 
         return {
@@ -70,9 +72,11 @@ export class NewsService {
             'description',
             'source',
             'publishedAt',
+            'vote',
             'voteCounts',
           ]),
           publishedAt: this.dateService.format(publishedAt),
+          isVoted: !_.isEmpty(vote),
           voteStatistics:
             this.newsVoteCountService.calculateVotePercentages(voteCounts),
         };
