@@ -38,15 +38,15 @@ export class NewsVoteService {
 
   async castVote(params: CastVoteParams): Promise<CastVoteResult> {
     const { newsId, bias, votedIp } = params;
-    if (!(await this.newsService.doesNewsExist(newsId))) {
-      throw new NotFoundException('News does not exist');
-    } else if (
+    if (
       await this.doesNewsVoteExist({
         newsId,
         votedIp,
       })
     ) {
       throw new BadRequestException('Vote has already been cast for this news');
+    } else if (!(await this.newsService.doesNewsExist(newsId))) {
+      throw new NotFoundException('News does not exist');
     }
 
     await this.newsVoteRepository.save(

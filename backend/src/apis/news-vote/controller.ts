@@ -4,10 +4,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiTags,
-  ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
-
-import { Throttle } from '@nestjs/throttler';
 
 import { Request } from '../interface';
 
@@ -17,7 +14,6 @@ import {
   CastVoteApiBadRequestResponse,
   CastVoteApiNotFoundResponse,
   CastVoteApiOkResponse,
-  CastVoteApiTooManyRequestsResponse,
   CastVoteBody,
 } from './dto.js';
 import { NewsVoteService } from './service.js';
@@ -36,10 +32,6 @@ export class NewsVoteController {
   @ApiNotFoundResponse({
     type: CastVoteApiNotFoundResponse,
   })
-  @ApiTooManyRequestsResponse({
-    type: CastVoteApiTooManyRequestsResponse,
-  })
-  @Throttle({ default: { limit: 1, ttl: 60000 } })
   @Post('/:newsId')
   async castVote(
     @Req() request: Request,

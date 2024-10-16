@@ -75,14 +75,3 @@ export class CastVoteApiNotFoundResponse implements ApiResponse {
   @ApiProperty({ example: 'News does not exist' })
   message: string;
 }
-
-export class CastVoteApiTooManyRequestsResponse implements ApiResponse {
-  @ApiProperty({ example: false })
-  success: boolean;
-
-  @ApiProperty({ example: HttpStatus.TOO_MANY_REQUESTS })
-  statusCode: HttpStatus;
-
-  @ApiProperty({ example: 'Too many requests' })
-  message: string;
-}
