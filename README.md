@@ -19,7 +19,7 @@ This project collects news data and allows users to vote on current events
 - **Redis:**
   - REDIS_HOST: `redis`
   - REDIS_PASSWORD: `DWif&&pdZN*2eyXh`
-- Start setting up Docker: `docker-compose up -d`
+- Start setting up Docker: `docker-compose up -d --build`
 - Access the Swagger API documentation: `http://localhost/api/docs`
 - Continuously monitor Docker container logs: `docker logs -f nf-backend`
 
