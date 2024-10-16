@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 import _ from 'lodash';
 import { DateTime } from 'luxon';
-import { IsNull, LessThan, Not, Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 
 import { NewsEntity } from '../../entities/news/entity.js';
 
@@ -68,9 +68,7 @@ export class NewsService {
           voteCounts: true,
         },
         where: {
-          link: Not(IsNull()),
-          brief: Not(IsNull()),
-          description: Not(IsNull()),
+          isCollected: true,
           ...(lastPublishedAt
             ? {
                 publishedAt: LessThan(
@@ -191,9 +189,7 @@ export class NewsService {
 
     return await this.newsRepository.count({
       where: {
-        link: Not(IsNull()),
-        brief: Not(IsNull()),
-        description: Not(IsNull()),
+        isCollected: true,
         ...(category ? { category } : {}),
       },
     });

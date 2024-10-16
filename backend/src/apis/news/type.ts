@@ -22,6 +22,7 @@ export type UpdateNewsByGuidParams = {
   link?: string | null;
   brief?: string | null;
   description?: string | null;
+  isCollected: boolean;
 };
 
 export type GetLastQueryParams = {

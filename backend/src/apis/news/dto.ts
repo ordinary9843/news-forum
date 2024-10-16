@@ -1,7 +1,7 @@
 import { HttpStatus } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional } from 'class-validator';
 
 import { Category, Locale } from '../../entities/news/enum.js';
 import { ApiResponse } from '../interface.js';
@@ -67,6 +67,11 @@ export class GetNewsListQuery {
   @IsEnum(Category)
   @IsOptional()
   category?: Category;
+
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  @IsOptional()
+  reset?: boolean;
 }
 
 export class GetNewsListApiOkResponse implements ApiResponse {

@@ -54,6 +54,9 @@ export class NewsEntity {
   @Column({ type: 'varchar', length: 128 })
   source: string;
 
+  @Column({ name: 'is_collected', type: 'boolean' })
+  isCollected: boolean;
+
   @Column({
     name: 'published_at',
     type: 'timestamp',
