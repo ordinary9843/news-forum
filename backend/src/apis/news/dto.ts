@@ -1,14 +1,7 @@
 import { HttpStatus } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 
-import {
-  IsEnum,
-  IsInt,
-  IsOptional,
-  IsPositive,
-  Max,
-  Min,
-} from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional } from 'class-validator';
 
 import { Category, Locale } from '../../entities/news/enum.js';
 import { ApiResponse } from '../interface.js';
@@ -48,6 +41,9 @@ export class Item {
   @ApiProperty({ example: '2024-10-10 09:36:48' })
   publishedAt: string;
 
+  @ApiProperty({ example: false })
+  isVoted: boolean;
+
   @ApiProperty({ type: VoteStatistics })
   voteStatistics: VoteStatistics;
 }
@@ -60,9 +56,6 @@ export class PaginatedNews {
   totalPages: number;
 
   @ApiProperty({ example: 1 })
-  pageSize: number;
-
-  @ApiProperty({ example: 1 })
   page: number;
 
   @ApiProperty({ type: [Item] })
@@ -70,22 +63,15 @@ export class PaginatedNews {
 }
 
 export class GetNewsListQuery {
-  @ApiProperty({ example: 1 })
-  @IsInt()
-  @IsPositive()
-  page: number;
-
-  @ApiProperty({ example: 10 })
-  @IsInt()
-  @Min(10)
-  @Max(50)
-  @IsOptional()
-  limit?: number;
-
   @ApiProperty({ example: Category.BUSINESS })
   @IsEnum(Category)
   @IsOptional()
   category?: Category;
+
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  @IsOptional()
+  reset?: boolean;
 }
 
 export class GetNewsListApiOkResponse implements ApiResponse {

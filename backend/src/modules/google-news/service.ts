@@ -177,6 +177,7 @@ export class GoogleNewsService {
           link: finalUrl,
           brief,
           description,
+          isCollected: true,
         });
         await this.updateGoogleNews(id, {
           link,

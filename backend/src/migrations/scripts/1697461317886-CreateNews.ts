@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, Table } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table, TableIndex } from 'typeorm';
 
 import {
   DEFAULT_TIMESTAMP,
@@ -68,6 +68,11 @@ export default class CreateNews1697461317886 implements MigrationInterface {
             length: '128',
           },
           {
+            name: 'is_collected',
+            type: 'boolean',
+            default: false,
+          },
+          {
             name: 'published_at',
             type: 'timestamp',
           },
@@ -87,9 +92,63 @@ export default class CreateNews1697461317886 implements MigrationInterface {
       }),
       true,
     );
+    await queryRunner.createIndex(
+      NEWS_TABLE,
+      new TableIndex({
+        name: 'idx_news_is_collected',
+        columnNames: ['is_collected'],
+      }),
+    );
+    await queryRunner.createIndex(
+      NEWS_TABLE,
+      new TableIndex({
+        name: 'idx_news_category',
+        columnNames: ['category'],
+      }),
+    );
+    await queryRunner.createIndex(
+      NEWS_TABLE,
+      new TableIndex({
+        name: 'idx_news_published_at',
+        columnNames: ['published_at'],
+      }),
+    );
+    await queryRunner.createIndex(
+      NEWS_TABLE,
+      new TableIndex({
+        name: 'idx_news_is_collected_category',
+        columnNames: ['is_collected', 'category'],
+      }),
+    );
+    await queryRunner.createIndex(
+      NEWS_TABLE,
+      new TableIndex({
+        name: 'idx_news_is_collected_published_at',
+        columnNames: ['is_collected', 'published_at'],
+      }),
+    );
+    await queryRunner.createIndex(
+      NEWS_TABLE,
+      new TableIndex({
+        name: 'idx_news_is_collected_category_published_at',
+        columnNames: ['is_collected', 'category', 'published_at'],
+      }),
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<DownResult> {
+    await queryRunner.dropIndex(NEWS_TABLE, 'idx_news_is_collected');
+    await queryRunner.dropIndex(NEWS_TABLE, 'idx_news_category');
+    await queryRunner.dropIndex(NEWS_TABLE, 'idx_news_published_at');
+    await queryRunner.dropIndex(NEWS_TABLE, 'idx_news_is_collected_category');
+    await queryRunner.dropIndex(
+      NEWS_TABLE,
+      'idx_news_is_collected_published_at',
+    );
+    await queryRunner.dropIndex(
+      NEWS_TABLE,
+      'idx_news_is_collected_category_published_at',
+    );
     await queryRunner.dropTable(NEWS_TABLE);
   }
 }

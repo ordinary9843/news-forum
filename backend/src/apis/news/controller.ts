@@ -1,9 +1,11 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, Req } from '@nestjs/common';
 import {
   ApiOkResponse,
   ApiTags,
   ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
+
+import { Request } from '../interface';
 
 import {
   GetNewsListApiOkResponse,
@@ -26,8 +28,14 @@ export class NewsController {
   })
   @Get('/')
   async getNewsList(
+    @Req() request: Request,
     @Query() query: GetNewsListQuery,
   ): Promise<GetNewsListResult> {
-    return await this.newsService.getNewsList(query);
+    const { clientIp } = request;
+
+    return await this.newsService.getNewsList({
+      ...query,
+      clientIp,
+    });
   }
 }

@@ -7,8 +7,6 @@ import {
   ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
 
-import { Throttle } from '@nestjs/throttler';
-
 import { Request } from '../interface';
 
 import { CastVoteResult } from '../news-vote/type.js';
@@ -39,7 +37,6 @@ export class NewsVoteController {
   @ApiTooManyRequestsResponse({
     type: CastVoteApiTooManyRequestsResponse,
   })
-  @Throttle({ default: { limit: 1, ttl: 60000 } })
   @Post('/:newsId')
   async castVote(
     @Req() request: Request,
