@@ -1,6 +1,7 @@
 services:
   nginx:
     build: ./docker/nginx/
+    image: ${DOCKER_PREFIX}-nginx
     container_name: ${DOCKER_PREFIX}-nginx
     restart: always
     ports:
@@ -21,10 +22,14 @@ services:
     build:
       context: ./
       dockerfile: ./docker/backend/Dockerfile
+    image: ${DOCKER_PREFIX}-backend
     container_name: ${DOCKER_PREFIX}-backend
     restart: always
     env_file:
       - .env
+    command: /bin/sh -c "npm run build && pm2-runtime dist/main.js"
+    volumes:
+      - ./backend:/usr/src/app
     networks:
       - public-net
       - internal-net
@@ -38,6 +43,7 @@ services:
     build:
       context: ./
       dockerfile: ./docker/migration/Dockerfile
+    image: ${DOCKER_PREFIX}-migration
     container_name: ${DOCKER_PREFIX}-migration
     restart: on-failure
     env_file:
