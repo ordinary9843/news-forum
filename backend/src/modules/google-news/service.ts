@@ -61,8 +61,9 @@ export class GoogleNewsService {
   ) {}
 
   async onApplicationBootstrap() {
-    this.processGoogleNews();
-    this.processNews();
+    // TODO
+    // this.processGoogleNews();
+    // this.processNews();
   }
 
   async createGoogleNews(
@@ -89,7 +90,8 @@ export class GoogleNewsService {
     return await this.googleNewsRepository.save(existingGoogleNews);
   }
 
-  @Cron('*/5 * * * *')
+  // TODO
+  // @Cron('*/5 * * * *')
   async processGoogleNews(): Promise<ProcessGoogleNewsResult> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -152,7 +154,8 @@ export class GoogleNewsService {
     await queryRunner.release();
   }
 
-  @Cron('*/3 * * * *')
+  // TODO
+  // @Cron('*/3 * * * *')
   async processNews(): Promise<ProcessNewsResult> {
     const pendingRetrievalGoogleNews =
       await this.getPendingRetrievalGoogleNews();

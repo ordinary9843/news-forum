@@ -1,1 +1,3 @@
-export const GET_NEWS_LIST_LIMIT = 30;
+export const GET_NEWS_LIST_LIMIT = 10;
+
+export const LAST_PUBLISHED_AT_CACHE_TTL = 3600;

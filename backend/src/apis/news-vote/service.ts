@@ -92,6 +92,6 @@ export class NewsVoteService {
   private generateCastVoteCacheKey(
     params: GenerateCastVoteCacheKeyParams,
   ): GenerateCastVoteCacheKeyResult {
-    return `cast_vote_${this.jsonService.stringify(params)}`;
+    return `news_vote_cast_vote_${this.jsonService.stringify(params)}`;
   }
 }
