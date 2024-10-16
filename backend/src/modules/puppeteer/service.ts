@@ -4,13 +4,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Mutex } from 'async-mutex';
 import Bluebird from 'bluebird';
-import _ from 'lodash';
 import puppeteer, { Browser, Page } from 'puppeteer';
 
-import {
-  CLOSE_BROWSER_RETRY_COUNT,
-  CLOSE_PAGE_RETRY_COUNT,
-} from './constant.js';
 import {
   CreateBrowserResult,
   GetBrowserResult,
@@ -62,7 +57,7 @@ export class PuppeteerService {
       return page;
     } catch (error) {
       this.logger.error(
-        `openBrowserPage(): Failed to open page (error=${inspect(error)})`,
+        `openPage(): Failed to open page (error=${inspect(error)})`,
       );
       throw error;
     } finally {
@@ -70,77 +65,25 @@ export class PuppeteerService {
     }
   }
 
-  async closePage(
-    page: Page,
-    retryCount: number = CLOSE_PAGE_RETRY_COUNT,
-  ): Promise<ClosePageResult> {
+  async closePage(page: Page): Promise<ClosePageResult> {
     if (!page) {
       this.logger.verbose(`closePage(): Page does not exist`);
       return;
     }
 
-    try {
-      await page.close();
-    } catch (error) {
-      if (retryCount > 0) {
-        this.logger.error(
-          `closePage(): Retrying ... (retryCount=${
-            CLOSE_PAGE_RETRY_COUNT - retryCount + 1
-          }, error=${inspect(error)})`,
-        );
-        await this.closePage(page, retryCount - 1);
-      } else {
-        this.logger.error(
-          `closePage(): Failed after multiple retries  (error=${inspect(
-            error,
-          )})`,
-        );
-      }
-    }
+    await page.close();
+    this.logger.log('closePage(): Page closed successfully');
   }
 
-  async closeBrowser(
-    browser: Browser,
-    retryCount: number = CLOSE_BROWSER_RETRY_COUNT,
-  ): Promise<CloseBrowserResult> {
+  async closeBrowser(browser: Browser): Promise<CloseBrowserResult> {
     if (!browser) {
       this.logger.verbose(`closeBrowser(): Browser does not exist`);
       return;
     }
 
     await this.closeAllPages(browser);
-
-    try {
-      await browser.close();
-      this.logger.log('closeBrowser(): Browser process killed successfully');
-    } catch (error) {
-      if (_.has(browser, 'process')) {
-        const process = browser.process();
-        const killRes = process.kill('SIGKILL');
-        if (killRes) {
-          this.logger.log(
-            `closeBrowser(): Killed pid ${process.pid} successfully`,
-          );
-        } else {
-          this.logger.error(`closeBrowser(): Kill pid ${process.pid} failed`);
-        }
-      }
-
-      if (retryCount > 0) {
-        this.logger.error(
-          `closeBrowser(): Retrying ... (retryCount=${
-            CLOSE_BROWSER_RETRY_COUNT - retryCount + 1
-          }, error=${inspect(error)})`,
-        );
-        await this.closeBrowser(browser, retryCount - 1);
-      } else {
-        this.logger.error(
-          `closeBrowser(): Failed after multiple retries (error=${inspect(
-            error,
-          )})`,
-        );
-      }
-    }
+    await browser.close();
+    this.logger.log('closeBrowser(): Browser closed successfully');
   }
 
   async closeAllPages(browser: Browser): Promise<CloseAllPagesResult> {

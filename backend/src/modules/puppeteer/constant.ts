@@ -1,3 +1,0 @@
-export const CLOSE_BROWSER_RETRY_COUNT = 10;
-
-export const CLOSE_PAGE_RETRY_COUNT = 10;

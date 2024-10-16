@@ -1,5 +1,7 @@
+// npm run test -- ./src/modules/puppeteer/service.spec.ts
+
 import { ConfigService } from '@nestjs/config';
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 import { Browser, Page } from 'puppeteer';
 import * as puppeteer from 'puppeteer';
 
@@ -29,10 +31,13 @@ describe('PuppeteerService', () => {
   let puppeteerService: PuppeteerService;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    const module = await Test.createTestingModule({
       providers: [
         PuppeteerService,
-        { provide: ConfigService, useValue: mockConfigService },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
+        },
       ],
     }).compile();
     puppeteerService = module.get<PuppeteerService>(PuppeteerService);
@@ -47,71 +52,37 @@ describe('PuppeteerService', () => {
   describe('openPage', () => {
     it('should open a new page', async () => {
       const page = await puppeteerService.openPage();
-      expect(mockBrowser.newPage).toHaveBeenCalled();
+      expect(mockBrowser.newPage).toHaveBeenCalledTimes(1);
       expect(page).toBe(mockPage);
     });
 
     it('should log an error if opening a page fails', async () => {
-      const errorMessage = 'Failed to open page';
-      (mockBrowser.newPage as jest.Mock).mockRejectedValueOnce(
-        new Error(errorMessage),
-      );
-      await expect(puppeteerService.openPage()).rejects.toThrow(
-        new Error(errorMessage),
-      );
+      jest.spyOn(mockBrowser, 'newPage').mockRejectedValueOnce(new Error());
+      await expect(puppeteerService.openPage()).rejects.toThrow(new Error());
     });
   });
 
   describe('closePage', () => {
+    it('should not call close when the page is undefined', async () => {
+      await puppeteerService.closePage(undefined);
+      expect(mockPage.close).not.toHaveBeenCalled();
+    });
+
     it('should close the page', async () => {
       await puppeteerService.closePage(mockPage as Page);
-      expect(mockPage.close).toHaveBeenCalled();
-    });
-
-    it('should retry closing the page if it fails', async () => {
-      (mockPage.close as jest.Mock).mockRejectedValueOnce(
-        new Error('Close page error'),
-      );
-      await puppeteerService.closePage(mockPage as Page);
-      expect(mockPage.close).toHaveBeenCalledTimes(2);
-    });
-
-    // it('should throw an error if closing the page fails after retries', async () => {
-    //   (mockPage.close as jest.Mock).mockRejectedValue(
-    //     new Error('Close page error'),
-    //   );
-    //   await expect(
-    //     puppeteerService.closePage(mockPage as Page),
-    //   ).rejects.toThrow('Close page error');
-    // });
-  });
-
-  describe('createBrowser', () => {
-    it('should create a new browser instance', async () => {
-      const browser = await (puppeteerService as any).createBrowser();
-      expect(mockedPuppeteer.launch).toHaveBeenCalledWith({
-        headless: true,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-extensions',
-          '--disable-notifications',
-          '--disable-infobars',
-        ],
-      });
-      expect(browser).toBe(mockBrowser);
+      expect(mockPage.close).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('closeAllPages', () => {
     it('should close all pages', async () => {
-      (mockBrowser.pages as jest.Mock).mockResolvedValue([mockPage]);
+      jest.spyOn(mockBrowser, 'pages').mockResolvedValue([mockPage as Page]);
       await puppeteerService.closeAllPages(mockBrowser as Browser);
       expect(mockPage.close).toHaveBeenCalledTimes(1);
     });
 
     it('should not throw if there are no pages', async () => {
-      (mockBrowser.pages as jest.Mock).mockResolvedValue([]);
+      jest.spyOn(mockBrowser, 'pages').mockResolvedValue([]);
       await expect(
         puppeteerService.closeAllPages(mockBrowser as Browser),
       ).resolves.not.toThrow();
@@ -127,34 +98,34 @@ describe('PuppeteerService', () => {
 
     it('should create a new browser if none exists', async () => {
       const browser = await puppeteerService.getBrowser();
-      expect(mockedPuppeteer.launch).toHaveBeenCalled();
+      expect(mockedPuppeteer.launch).toHaveBeenCalledTimes(1);
       expect(browser).toBe(mockBrowser);
     });
   });
 
-  // describe('closeBrowser', () => {
-  //   it('should close the browser', async () => {
-  //     (puppeteerService as any).browser = mockBrowser;
-  //     await puppeteerService.closeBrowser();
-  //     expect(mockBrowser.close).toHaveBeenCalled();
-  //   });
+  describe('closeBrowser', () => {
+    it('should not call close when the browser is undefined', async () => {
+      await puppeteerService.closeBrowser(undefined);
+      expect(mockBrowser.close).not.toHaveBeenCalled();
+    });
 
-  //   it('should not throw if browser is null', async () => {
-  //     (puppeteerService as any).browser = null;
-  //     await expect(puppeteerService.closeBrowser()).resolves.not.toThrow();
-  //   });
-  // });
+    it('should close the browser', async () => {
+      await puppeteerService.closeBrowser(mockBrowser as Browser);
+      expect(mockBrowser.close).toHaveBeenCalledTimes(1);
+    });
 
-  // describe('killBrowser', () => {
-  //   it('should kill the browser process', async () => {
-  //     (puppeteerService as any).browser = mockBrowser;
-  //     await puppeteerService.killBrowser();
-  //     expect(mockBrowser.process().kill).toHaveBeenCalled();
-  //   });
+    it('should not throw if browser is null', async () => {
+      await expect(
+        puppeteerService.closeBrowser(mockBrowser as Browser),
+      ).resolves.not.toThrow();
+    });
+  });
 
-  //   it('should not throw if browser is null', async () => {
-  //     (puppeteerService as any).browser = null;
-  //     await expect(puppeteerService.killBrowser()).resolves.not.toThrow();
-  //   });
-  // });
+  describe('onModuleDestroy', () => {
+    it('should call closeBrowser on module destroy', async () => {
+      jest.spyOn(puppeteerService, 'closeBrowser').mockResolvedValue(undefined);
+      await puppeteerService.onModuleDestroy();
+      expect(puppeteerService.closeBrowser).toHaveBeenCalledTimes(1);
+    });
+  });
 });

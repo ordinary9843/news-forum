@@ -188,7 +188,7 @@ export class GoogleNewsService {
         );
       } catch (error) {
         this.logger.error(
-          `processNews: Failed to retrieve news (error=${inspect(error)})`,
+          `processNews(): Failed to retrieve news (error=${inspect(error)})`,
         );
         await this.updateGoogleNews(id, {
           retrieveCount: retrieveCount + 1,
@@ -269,7 +269,7 @@ export class GoogleNewsService {
       };
     } catch (error) {
       this.logger.error(
-        `fetchNews: Failed to fetch news (error=${inspect(error)})`,
+        `fetchNews(): Failed to fetch news (error=${inspect(error)})`,
       );
     }
 
