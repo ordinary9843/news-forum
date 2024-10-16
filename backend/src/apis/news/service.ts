@@ -32,7 +32,7 @@ export class NewsService {
   ) {}
 
   async getNewsList(query: GetNewsListQuery): Promise<GetNewsListResult> {
-    const { page = 1, limit = GET_NEWS_LIST_LIMIT } = query;
+    const { page = 1, limit = GET_NEWS_LIST_LIMIT, category } = query;
     const [items, totalItems] = await this.newsRepository.findAndCount({
       relations: {
         voteCounts: true,
@@ -41,6 +41,7 @@ export class NewsService {
         link: Not(IsNull()),
         brief: Not(IsNull()),
         description: Not(IsNull()),
+        ...(category ? { category } : {}),
       },
       take: limit,
       skip: (page - 1) * limit,
