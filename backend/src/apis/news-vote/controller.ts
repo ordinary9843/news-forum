@@ -4,6 +4,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiTags,
+  ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
 
 import { Request } from '../interface';
@@ -14,6 +15,7 @@ import {
   CastVoteApiBadRequestResponse,
   CastVoteApiNotFoundResponse,
   CastVoteApiOkResponse,
+  CastVoteApiTooManyRequestsResponse,
   CastVoteBody,
 } from './dto.js';
 import { NewsVoteService } from './service.js';
@@ -31,6 +33,9 @@ export class NewsVoteController {
   })
   @ApiNotFoundResponse({
     type: CastVoteApiNotFoundResponse,
+  })
+  @ApiTooManyRequestsResponse({
+    type: CastVoteApiTooManyRequestsResponse,
   })
   @Post('/:newsId')
   async castVote(
