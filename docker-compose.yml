@@ -27,12 +27,28 @@ services:
       - .env
     networks:
       - public-net
+      - internal-net
     depends_on:
       - postgres
       - redis
     links:
       - postgres
       - redis
+  migration:
+    build:
+      context: ./
+      dockerfile: ./docker/migration/Dockerfile
+    container_name: ${DOCKER_PREFIX}-migration
+    restart: on-failure
+    env_file:
+      - .env
+    command: /bin/sh -c "npm run migration:run && tail -f /dev/null"
+    depends_on:
+      - postgres
+    links:
+      - postgres
+    networks:
+      - internal-net
   postgres:
     image: postgres:latest
     container_name: ${DOCKER_PREFIX}-postgres
@@ -48,6 +64,7 @@ services:
       - POSTGRES_PASSWORD=${TYPEORM_PASSWORD}
     networks:
       - public-net
+      - internal-net
   redis:
     image: redis:latest
     container_name: ${DOCKER_PREFIX}-redis
@@ -63,8 +80,10 @@ services:
     command: redis-server /usr/local/etc/redis/redis.conf
     networks:
       - public-net
+      - internal-net
 volumes:
   postgres-data:
   redis-data:
 networks:
   public-net:
+  internal-net:
