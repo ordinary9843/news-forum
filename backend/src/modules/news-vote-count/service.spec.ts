@@ -97,9 +97,9 @@ describe('NewsVoteCountService', () => {
       jest
         .spyOn(newsVoteCountRepository, 'create')
         .mockReturnValue(newsVoteCountEntity);
-      const voteStatistics =
-        await newsVoteCountService.calculateVoteStatistics(params);
-      expect(voteStatistics).toEqual({
+      expect(
+        await newsVoteCountService.calculateVoteStatistics(params),
+      ).toEqual({
         fair: { count: 11, percent: 11 },
         slightlyBiased: { count: 20, percent: 20 },
         heavilyBiased: { count: 30, percent: 30 },
@@ -132,9 +132,9 @@ describe('NewsVoteCountService', () => {
       jest
         .spyOn(newsVoteCountRepository, 'create')
         .mockReturnValue(newsVoteCountEntity);
-      const voteStatistics =
-        await newsVoteCountService.calculateVoteStatistics(params);
-      expect(voteStatistics).toEqual({
+      expect(
+        await newsVoteCountService.calculateVoteStatistics(params),
+      ).toEqual({
         fair: { count: 11, percent: 28 },
         slightlyBiased: { count: 10, percent: 24 },
         heavilyBiased: { count: 10, percent: 24 },
@@ -145,8 +145,7 @@ describe('NewsVoteCountService', () => {
 
   describe('calculateVotePercentages', () => {
     it('should return zero counts and percentages when total votes are zero', () => {
-      const result = newsVoteCountService.calculateVotePercentages([]);
-      expect(result).toEqual({
+      expect(newsVoteCountService.calculateVotePercentages([])).toEqual({
         fair: { count: 0, percent: 0 },
         slightlyBiased: { count: 0, percent: 0 },
         heavilyBiased: { count: 0, percent: 0 },
