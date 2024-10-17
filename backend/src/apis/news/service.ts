@@ -14,28 +14,25 @@ import { NewsVoteCountService } from '../../modules/news-vote-count/service.js';
 
 import { RedisService } from '../../modules/redis/service.js';
 
-import {
-  GET_NEWS_LIST_LIMIT,
-  LAST_PUBLISHED_AT_CACHE_TTL,
-} from './constant.js';
+import { GET_NEWS_LIST_LIMIT, LAST_QUERY_CACHE_TTL } from './constant.js';
 import {
   CreateNewsParams,
   CreateNewsResult,
   DoesNewsExistByGuidResult,
   DoesNewsExistResult,
-  GenerateNewsListCacheKeyResult,
-  GetLastQueryParams,
-  GetLastQueryResult,
+  GenerateLastQueryCacheKeyResult,
+  ShouldResetQueryParams,
+  ShouldResetQueryResult,
   GetNewsListParams,
   GetNewsListResult,
-  GetTotalItemsOptions,
-  GetTotalItemsResult,
   TransformNewsListParams,
   TransformNewsListResult,
   UpdateLastQueryParams,
   UpdateLastQueryResult,
   UpdateNewsByGuidParams,
   UpdateNewsByGuidResult,
+  DecodeNextTokenResult,
+  EncodeNextTokenResult,
 } from './type.js';
 
 @Injectable()
@@ -50,51 +47,52 @@ export class NewsService {
   ) {}
 
   async getNewsList(params: GetNewsListParams): Promise<GetNewsListResult> {
-    const { clientIp, reset = false, category = undefined } = params;
-    const cacheKey = this.generateLastPublishedAtCacheKey(clientIp);
-    const { lastPage, lastPublishedAt } = await this.getLastQuery(cacheKey, {
+    const {
+      clientIp,
+      reset = false,
+      limit = GET_NEWS_LIST_LIMIT,
+      category = undefined,
+    } = params;
+    const cacheKey = this.generateLastQueryCacheKey(clientIp);
+    const shouldResetQuery = await this.shouldResetQuery(cacheKey, {
       reset,
+      limit,
       category,
     });
-    const totalItems = await this.getTotalItems({
+    const decodedNextToken = this.decodeNextToken(
+      !shouldResetQuery ? _.get(params, 'nextToken', undefined) : undefined,
+    );
+    const items = await this.newsRepository.find({
+      relations: {
+        vote: true,
+        voteCounts: true,
+      },
+      where: {
+        isCollected: true,
+        ...(decodedNextToken
+          ? {
+              publishedAt: LessThan(
+                DateTime.fromJSDate(new Date(decodedNextToken)).toJSDate(),
+              ),
+            }
+          : {}),
+        ...(category ? { category } : {}),
+      },
+      take: limit,
+      order: {
+        publishedAt: 'DESC',
+        id: 'DESC',
+      },
+    });
+    await this.updateLastQuery(cacheKey, {
+      limit,
       category,
     });
-    const totalPages = Math.ceil(totalItems / GET_NEWS_LIST_LIMIT);
-    let items = [];
-    if (lastPage <= totalPages) {
-      items = await this.newsRepository.find({
-        relations: {
-          vote: true,
-          voteCounts: true,
-        },
-        where: {
-          isCollected: true,
-          ...(lastPublishedAt
-            ? {
-                publishedAt: LessThan(
-                  DateTime.fromJSDate(new Date(lastPublishedAt)).toJSDate(),
-                ),
-              }
-            : {}),
-          ...(category ? { category } : {}),
-        },
-        take: GET_NEWS_LIST_LIMIT,
-        order: {
-          publishedAt: 'DESC',
-          id: 'DESC',
-        },
-      });
-      await this.updateLastQuery(cacheKey, {
-        lastPage,
-        items,
-        category,
-      });
-    }
 
     return this.transformNewsList({
-      totalItems,
-      totalPages,
-      lastPage,
+      nextToken: this.encodeNextToken(
+        _.get(_.last(items), 'publishedAt', undefined),
+      ),
       items,
     });
   }
@@ -133,77 +131,68 @@ export class NewsService {
     return await this.newsRepository.save(existingNews);
   }
 
-  private generateLastPublishedAtCacheKey(
+  private generateLastQueryCacheKey(
     clientIp: string,
-  ): GenerateNewsListCacheKeyResult {
-    return `news_published_at_${clientIp}`;
+  ): GenerateLastQueryCacheKeyResult {
+    return `news_last_query_${clientIp}`;
   }
 
-  private async getLastQuery(
+  private async shouldResetQuery(
     cacheKey: string,
-    params: GetLastQueryParams,
-  ): Promise<GetLastQueryResult> {
-    const { reset, category } = params;
-    let lastPage = 1;
-    let lastPublishedAt = undefined;
+    params: ShouldResetQueryParams,
+  ): Promise<ShouldResetQueryResult> {
+    const { reset, limit, category } = params;
+    console.log(params);
     if (await this.redisService.exists(cacheKey)) {
-      const lastQuery = this.jsonService.parse(
+      const { lastLimit, lastCategory } = this.jsonService.parse(
         await this.redisService.get(cacheKey),
       );
-
-      lastPage = _.get(lastQuery, 'lastPage', 1);
-      lastPublishedAt = _.get(lastQuery, 'lastPublishedAt');
-      const lastCategory = _.get(lastQuery, 'lastCategory');
-      if (reset || category !== lastCategory) {
-        lastPage = 1;
-        lastPublishedAt = undefined;
+      if (reset || limit !== lastLimit || category !== lastCategory) {
+        return true;
       }
     }
 
-    return {
-      lastPage,
-      lastPublishedAt,
-    };
+    return false;
   }
 
   private async updateLastQuery(
     cacheKey: string,
     params: UpdateLastQueryParams,
   ): Promise<UpdateLastQueryResult> {
-    const { lastPage, items, category } = params;
+    const { limit, category } = params;
     await this.redisService.set(
       cacheKey,
       this.jsonService.stringify({
-        lastPage: lastPage + 1,
+        lastLimit: limit,
         lastCategory: category,
-        lastPublishedAt: _.get(_.last(items), 'publishedAt', undefined),
       }),
-      LAST_PUBLISHED_AT_CACHE_TTL,
+      LAST_QUERY_CACHE_TTL,
     );
   }
 
-  private async getTotalItems(
-    options: GetTotalItemsOptions,
-  ): Promise<GetTotalItemsResult> {
-    const { category } = options;
+  encodeNextToken(nextToken: string | undefined): EncodeNextTokenResult {
+    if (!nextToken) {
+      return undefined;
+    }
 
-    return await this.newsRepository.count({
-      where: {
-        isCollected: true,
-        ...(category ? { category } : {}),
-      },
-    });
+    return Buffer.from(nextToken, 'utf-8').toString('base64');
+  }
+
+  decodeNextToken(encodedToken: string): DecodeNextTokenResult {
+    if (!encodedToken) {
+      return undefined;
+    }
+
+    return Buffer.from(encodedToken, 'base64').toString('utf-8');
   }
 
   private transformNewsList(
     params: TransformNewsListParams,
   ): TransformNewsListResult {
-    const { totalItems, totalPages, lastPage, items } = params;
+    const { nextToken, items } = params;
 
     return {
-      totalItems,
-      totalPages,
-      page: lastPage,
+      nextToken,
       items: _.map(items, (item) => {
         const { publishedAt, vote, voteCounts } = item;
         _.unset(item, 'vote');
