@@ -24,28 +24,34 @@ export class Item {
   @ApiProperty({ example: Category.BUSINESS })
   category: Category;
 
-  @ApiProperty({ example: 'https://money.udn.com/money/story/5612/8279404' })
+  @ApiProperty({ example: 'https://pr.tsmc.com/chinese/news/3180' })
   link: string;
 
   @ApiProperty({
     example:
-      '鴻海蓋最大 AI 伺服器廠 規劃在墨西哥建GB200工廠 | 產業熱點 | 產業 - 經濟日報',
+      '台積公司2024年第三季每股盈餘新台幣12.54元|台灣積體電路製造股份有限公司 - TSMC Events',
   })
   title: string;
 
   @ApiProperty({
     example:
-      '鴻海（2317）董事長劉揚偉昨（8）日表示，繼主權AI之後，主權伺服器正在興起...',
+      '發佈單位 :台灣積體電路製造股份有限公司 發佈日期 : 2024/10/17 台灣積體電路製造股份有限公司今（17）日公佈2024年第三季財務報告，合併營收約新台幣7,596億9千萬元，稅後純益約新台幣3,252億6千萬元，每股盈餘為新台幣12.54元（折合美國存託憑證每單位為1.94美元）。...',
+  })
+  brief: string;
+
+  @ApiProperty({
+    example:
+      '發佈單位 :台灣積體電路製造股份有限公司 發佈日期 : 2024/10/17 台灣積體電路製造股份有限公司今（17）日公佈2024年第三季財務報告，合併營收約新台幣7,596億9千萬元，稅後純益約新台幣3,252億6千萬元，每股盈餘為新台幣12.54元（折合美國存託憑證每單位為1.94美元）。 與去年同期相較，2024年第三季營收增加了39.0%，稅後純益與每股盈餘皆增加了54.2%。與前一季相較，2024年第三季營收增加了12.8%，稅後純益則增加了31.2%。以上財務數字皆為合併財務報表數字，且係依照金管會認可之國際財務報導準則（TIFRS）所編製。 若以美元計算，2024年第三季營收為235億，較去年同期增加了36.0%，較前一季增加了12.9%。 2024年第三季毛利率為57.8%，營業利益率為47.5%，稅後純益率則為42.8%。 3奈米製程出貨佔台積公司2024年第三季晶圓銷售金額的20%，5奈米製程出貨佔全季晶圓銷售金額的32%；7奈米製程出貨則佔全季晶圓銷售金額的17%。總體而言，先進製程（包含7奈米及更先進製程）的營收達到全季晶圓銷售金額的69%。',
   })
   description: string;
 
-  @ApiProperty({ example: '經濟日報' })
+  @ApiProperty({ example: 'TSMC Events' })
   source: string;
 
-  @ApiProperty({ example: '2024-10-10 09:36:48' })
+  @ApiProperty({ example: '2024-10-17 13:34:34' })
   publishedAt: string;
 
-  @ApiProperty({ example: false })
+  @ApiProperty({ example: true })
   isVoted: boolean;
 
   @ApiProperty({ example: Bias.FAIR })
