@@ -215,6 +215,7 @@ export class NewsService {
           ]),
           publishedAt: this.dateService.format(publishedAt),
           isVoted: !_.isEmpty(vote),
+          votedOption: _.get(vote, 'bias', null),
           voteStatistics:
             this.newsVoteCountService.calculateVotePercentages(voteCounts),
         };
