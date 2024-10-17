@@ -51,12 +51,14 @@ export class NewsService {
     const {
       clientIp,
       reset = false,
+      nextToken = null,
       limit = GET_NEWS_LIST_LIMIT,
       category = undefined,
     } = params;
     const cacheKey = this.generateLastQueryCacheKey(clientIp);
     const shouldResetQuery = await this.shouldResetQuery(cacheKey, {
       reset,
+      nextToken,
       limit,
       category,
     });
@@ -93,9 +95,7 @@ export class NewsService {
     const lastPublishedAt = _.get(_.last(items), 'publishedAt', null);
 
     return this.transformNewsList({
-      nextToken: this.encodeNextToken(
-        lastPublishedAt ? lastPublishedAt : decodedNextToken,
-      ),
+      nextToken: this.encodeNextToken(lastPublishedAt || decodedNextToken),
       items,
     });
   }
@@ -144,12 +144,17 @@ export class NewsService {
     cacheKey: string,
     params: ShouldResetQueryParams,
   ): Promise<ShouldResetQueryResult> {
-    const { reset, limit, category } = params;
+    const { reset, nextToken, limit, category } = params;
     if (await this.redisService.exists(cacheKey)) {
       const { lastLimit, lastCategory } = this.jsonService.parse(
         await this.redisService.get(cacheKey),
       );
-      if (reset || limit !== lastLimit || category !== lastCategory) {
+      if (
+        reset ||
+        !this.isValidNextToken(nextToken) ||
+        limit !== lastLimit ||
+        category !== lastCategory
+      ) {
         return true;
       }
     }

@@ -29,6 +29,7 @@ export type UpdateNewsByGuidParams = {
 
 export type ShouldResetQueryParams = {
   reset?: boolean;
+  nextToken?: string | null;
   limit?: number;
   category?: Category;
 };
