@@ -28,8 +28,6 @@ services:
     env_file:
       - .env
     command: /bin/sh -c "npm run build && pm2-runtime dist/main.js"
-    volumes:
-      - ./backend:/usr/src/app
     networks:
       - public-net
       - internal-net
