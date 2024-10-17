@@ -1,4 +1,7 @@
 # News Forum
+[![build](https://github.com/ordinary9843/news-forum/actions/workflows/build.yml/badge.svg)](https://github.com/ordinary9843/news-forum/actions/workflows/build.yml)
+[![codecov](https://codecov.io/gh/ordinary9843/news-forum/graph/badge.svg?token=RPFy0l84NO)](https://codecov.io/gh/ordinary9843/news-forum)
+
 This project collects news data and allows users to vote on current events
 
 ## Requirements
