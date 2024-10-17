@@ -10,16 +10,16 @@ This project collects news data and allows users to vote on current events
 - Navigate to the project directory: `cd ./news-forum`
 - Copy the environment file: `cp .env.example .env`
 - Fill in the following information in `.env`:
-- **App:**
-  - SERVER_MODE: `DEV`
-- **PostgreSQL:**
-  - TYPEORM_HOST: `postgres`
-  - TYPEORM_USERNAME: `root`
-  - TYPEORM_PASSWORD: `DWif&&pdZN*2eyXh`
-- **Redis:**
-  - REDIS_HOST: `redis`
-  - REDIS_PASSWORD: `DWif&&pdZN*2eyXh`
-- Start setting up Docker: `docker-compose up -d --build`
+  - **App:**
+    - SERVER_MODE: `DEV`
+  - **PostgreSQL:**
+    - TYPEORM_HOST: `postgres`
+    - TYPEORM_USERNAME: `root`
+    - TYPEORM_PASSWORD: `DWif&&pdZN*2eyXh`
+  - **Redis:**
+    - REDIS_HOST: `redis`
+    - REDIS_PASSWORD: `DWif&&pdZN*2eyXh`
+- Start setting up Docker: `docker-compose up -d`
 - Access the Swagger API documentation: `http://localhost/api/docs`
 - Continuously monitor Docker container logs: `docker logs -f nf-backend`
 

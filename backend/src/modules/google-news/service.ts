@@ -45,7 +45,7 @@ import {
   UpdateGoogleNewsParams,
   ProcessNewsResult,
   FetchNewsResult,
-  SanitizeDescriptionResult,
+  SanitizeContentResult,
   TruncateBriefResult,
 } from './type.js';
 
@@ -108,63 +108,75 @@ export class GoogleNewsService {
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
-    const categories = Object.values(Category);
-    for (const category of categories) {
-      for (const locale of Object.values(Locale)) {
-        try {
-          const rssFeed = await this.fetchGoogleNews(locale, category);
-          for (const channel of rssFeed.rss.channel) {
-            for (const item of channel.item) {
-              await queryRunner.startTransaction();
-              try {
-                const googleNewsItem = this.extractGoogleNewsItem(item);
-                const { guid, link, title, source, pubDate } = googleNewsItem;
-                if (!this.isValidGoogleNewsItem(googleNewsItem)) {
-                  this.logger.warn(
-                    `processGoogleNews(): Skipping invalid news (title=${title})`,
+
+    try {
+      const categories = Object.values(Category);
+      for (const category of categories) {
+        for (const locale of Object.values(Locale)) {
+          try {
+            const rssFeed = await this.fetchGoogleNews(locale, category);
+            const channels = _.get(rssFeed, 'rss.channel', []);
+            for (const channel of channels) {
+              const items = _.get(channel, 'item', []);
+              for (const item of items) {
+                await queryRunner.startTransaction();
+
+                try {
+                  const googleNewsItem = this.extractGoogleNewsItem(item);
+                  const { guid, link, title, source, pubDate } = googleNewsItem;
+                  if (!this.isValidGoogleNewsItem(googleNewsItem)) {
+                    this.logger.warn(
+                      `processGoogleNews(): Skipping invalid news (title=${title})`,
+                    );
+                    continue;
+                  } else if (await this.newsService.doesNewsExistByGuid(guid)) {
+                    this.logger.warn(
+                      `processGoogleNews(): News already exists (title=${title})`,
+                    );
+                    continue;
+                  }
+
+                  await this.createGoogleNews({
+                    guid,
+                    link,
+                  });
+                  const { id } = await this.newsService.createNews({
+                    locale,
+                    category,
+                    guid,
+                    title,
+                    source,
+                    publishedAt: pubDate,
+                  });
+                  await this.newsVoteCountService.initializeVoteCounts(id);
+                  this.logger.log(
+                    `processGoogleNews(): News has been saved successfully (title=${title})`,
                   );
-                  continue;
-                } else if (await this.newsService.doesNewsExistByGuid(guid)) {
-                  this.logger.warn(
-                    `processGoogleNews(): News already exists (title=${title})`,
+                  await queryRunner.commitTransaction();
+                } catch (error) {
+                  this.logger.error(
+                    `processGoogleNews(): Failed to save news in transaction process (error=${inspect(
+                      error,
+                    )})`,
                   );
-                  continue;
+                  await queryRunner.rollbackTransaction();
                 }
-                await this.createGoogleNews({
-                  guid,
-                  link,
-                });
-                const { id } = await this.newsService.createNews({
-                  locale,
-                  category,
-                  guid,
-                  title,
-                  source,
-                  publishedAt: pubDate,
-                });
-                await this.newsVoteCountService.initializeVoteCounts(id);
-                this.logger.log(
-                  `processGoogleNews(): News has been saved successfully (title=${title})`,
-                );
-                await queryRunner.commitTransaction();
-              } catch (error) {
-                this.logger.error(
-                  `processGoogleNews(): Failed to save news in transaction process (error=${inspect(
-                    error,
-                  )})`,
-                );
-                await queryRunner.rollbackTransaction();
               }
             }
+          } catch (error) {
+            this.logger.error(
+              `processGoogleNews(): Failed to fetch news (error=${inspect(error)})`,
+            );
           }
-        } catch (error) {
-          this.logger.error(
-            `processGoogleNews(): Failed to fetch news (error=${inspect(error)})`,
-          );
         }
       }
+    } catch (error) {
+      this.logger.error(
+        `processGoogleNews(): Failed to process google news (error=${inspect(error)})`,
+      );
+    } finally {
+      await queryRunner.release();
     }
-    await queryRunner.release();
   }
 
   @Cron('*/3 * * * *')
@@ -178,11 +190,15 @@ export class GoogleNewsService {
 
     const pendingRetrievalGoogleNews =
       await this.getPendingRetrievalGoogleNews();
-    for (const googleNews of pendingRetrievalGoogleNews) {
+    for (const {
+      id,
+      guid,
+      link,
+      retrieveCount,
+      news,
+    } of pendingRetrievalGoogleNews) {
       let page = null;
-      const { id, guid, link, retrieveCount, news } = googleNews;
       const { title } = news;
-
       try {
         this.logger.verbose(
           `processNews(): Prepare retrieve news (title=${title})`,
@@ -314,7 +330,7 @@ export class GoogleNewsService {
       }
 
       const { content } = article;
-      const description = this.sanitizeDescription(content);
+      const description = this.sanitizeContent(content);
 
       return {
         brief: this.truncateBrief(description),
@@ -332,7 +348,7 @@ export class GoogleNewsService {
     };
   }
 
-  private sanitizeDescription(content: string): SanitizeDescriptionResult {
+  private sanitizeContent(content: string): SanitizeContentResult {
     const options = {
       selectors: [
         { selector: 'a', options: { ignoreHref: true } },

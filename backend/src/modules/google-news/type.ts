@@ -88,6 +88,6 @@ export type ExtractNewsFromHtmlResult = {
   description: string;
 };
 
-export type SanitizeDescriptionResult = string;
+export type SanitizeContentResult = string;
 
 export type TruncateBriefResult = string;
