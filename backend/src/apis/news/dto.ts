@@ -1,13 +1,17 @@
 import { HttpStatus } from '@nestjs/common';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { IsBoolean, IsEnum, IsOptional } from 'class-validator';
+import { boolean } from 'boolean';
+import { Transform } from 'class-transformer';
+import { IsEnum, IsOptional, IsString, Max, Min } from 'class-validator';
 
 import { Category, Locale } from '../../entities/news/enum.js';
+import { Bias } from '../../entities/news-vote/enum.js';
 import { ApiResponse } from '../interface.js';
 
 import { VoteStatistics } from '../news-vote/dto.js';
 
+import { GET_NEWS_LIST_LIMIT } from './constant.js';
 import { GetNewsListResult } from './type.js';
 
 export class Item {
@@ -44,34 +48,53 @@ export class Item {
   @ApiProperty({ example: false })
   isVoted: boolean;
 
+  @ApiProperty({ example: Bias.FAIR })
+  votedOption: Bias;
+
   @ApiProperty({ type: VoteStatistics })
   voteStatistics: VoteStatistics;
 }
 
 export class PaginatedNews {
-  @ApiProperty({ example: 1 })
-  totalItems: number;
+  @ApiProperty({
+    example:
+      'VGh1IE9jdCAxNyAyMDI0IDA4OjAzOjEyIEdNVCswODAwICjlj7DljJfmqJnmupbmmYLplpMp',
+  })
+  nextToken: string;
 
-  @ApiProperty({ example: 1 })
-  totalPages: number;
-
-  @ApiProperty({ example: 1 })
-  page: number;
+  @ApiProperty({
+    example: true,
+  })
+  hasItems: boolean;
 
   @ApiProperty({ type: [Item] })
   items: Item[];
 }
 
 export class GetNewsListQuery {
-  @ApiProperty({ example: Category.BUSINESS })
+  @ApiPropertyOptional({ example: false })
+  @Transform(({ value }) => boolean(value))
+  @IsOptional()
+  reset?: string;
+
+  @ApiPropertyOptional({
+    example:
+      'VGh1IE9jdCAxNyAyMDI0IDA4OjAzOjEyIEdNVCswODAwICjlj7DljJfmqJnmupbmmYLplpMp',
+  })
+  @IsString()
+  @IsOptional()
+  nextToken?: string;
+
+  @ApiPropertyOptional({ example: GET_NEWS_LIST_LIMIT })
+  @Min(10)
+  @Max(100)
+  @IsOptional()
+  limit?: number;
+
+  @ApiPropertyOptional({ example: Category.BUSINESS })
   @IsEnum(Category)
   @IsOptional()
   category?: Category;
-
-  @ApiProperty({ example: false })
-  @IsBoolean()
-  @IsOptional()
-  reset?: boolean;
 }
 
 export class GetNewsListApiOkResponse implements ApiResponse {

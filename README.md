@@ -23,6 +23,10 @@ This project collects news data and allows users to vote on current events
 - Access the Swagger API documentation: `http://localhost/api/docs`
 - Continuously monitor Docker container logs: `docker logs -f nf-backend`
 
+## Important
+- If any `backend service` or `.env` is modified, be sure to run `docker-compose up -d --build` again
+- You can control whether to run the crawler by modifying the `ENABLE_CRAWLER` in the `.env`
+
 ## Related Docs
 - [Backend](https://github.com/ordinary9843/news-forum/blob/master/backend/README.md)
 - [Frontend](https://github.com/ordinary9843/news-forum/blob/master/frontend/README.md)

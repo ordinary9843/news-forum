@@ -7,9 +7,11 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import axios from 'axios';
+import { boolean } from 'boolean';
 import { convert } from 'html-to-text';
 import _ from 'lodash';
 import { DateTime } from 'luxon';
@@ -50,15 +52,21 @@ import {
 @Injectable()
 export class GoogleNewsService {
   private readonly logger = new Logger(GoogleNewsService.name);
+  private enabledCrawler: boolean;
 
   constructor(
     @InjectRepository(GoogleNewsEntity)
-    private readonly googleNewsRepository: Repository<GoogleNewsEntity>,
+    readonly googleNewsRepository: Repository<GoogleNewsEntity>,
+    private readonly configService: ConfigService,
     private readonly newsService: NewsService,
     private readonly newsVoteCountService: NewsVoteCountService,
     private readonly puppeteerService: PuppeteerService,
-    private readonly dataSource: DataSource,
-  ) {}
+    private dataSource: DataSource,
+  ) {
+    this.enabledCrawler = boolean(
+      this.configService.get<boolean>('APP.ENABLED_CRAWLER'),
+    );
+  }
 
   async onApplicationBootstrap() {
     this.processGoogleNews();
@@ -91,6 +99,13 @@ export class GoogleNewsService {
 
   @Cron('*/5 * * * *')
   async processGoogleNews(): Promise<ProcessGoogleNewsResult> {
+    if (!this.enabledCrawler) {
+      this.logger.warn(
+        `processGoogleNews(): Crawler is disabled (enabledCrawler=${this.enabledCrawler})`,
+      );
+      return;
+    }
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     const categories = Object.values(Category);
@@ -154,6 +169,13 @@ export class GoogleNewsService {
 
   @Cron('*/3 * * * *')
   async processNews(): Promise<ProcessNewsResult> {
+    if (!this.enabledCrawler) {
+      this.logger.warn(
+        `processNews(): Crawler is disabled (enabledCrawler=${this.enabledCrawler})`,
+      );
+      return;
+    }
+
     const pendingRetrievalGoogleNews =
       await this.getPendingRetrievalGoogleNews();
     for (const googleNews of pendingRetrievalGoogleNews) {

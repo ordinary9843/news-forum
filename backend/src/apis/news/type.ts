@@ -6,6 +6,8 @@ import { PaginatedNews } from './dto.js';
 export type GetNewsListParams = {
   clientIp: string;
   reset?: boolean;
+  nextToken?: string;
+  limit?: number;
   category?: Category;
 };
 
@@ -25,25 +27,20 @@ export type UpdateNewsByGuidParams = {
   isCollected: boolean;
 };
 
-export type GetLastQueryParams = {
+export type ShouldResetQueryParams = {
   reset?: boolean;
+  nextToken?: string | null;
+  limit?: number;
   category?: Category;
 };
 
 export type UpdateLastQueryParams = {
-  lastPage: number;
-  items: NewsEntity[];
-  category?: Category;
-};
-
-export type GetTotalItemsOptions = {
+  limit?: number;
   category?: Category;
 };
 
 export type TransformNewsListParams = {
-  totalItems: number;
-  totalPages: number;
-  lastPage: number;
+  nextToken: string;
   items: NewsEntity[];
 };
 
@@ -57,15 +54,16 @@ export type CreateNewsResult = NewsEntity;
 
 export type UpdateNewsByGuidResult = NewsEntity;
 
-export type GenerateNewsListCacheKeyResult = string;
+export type EncodeNextTokenResult = string | null;
 
-export type GetLastQueryResult = {
-  lastPage: number;
-  lastPublishedAt: Date;
-};
+export type DecodeNextTokenResult = string | null;
+
+export type IsValidNextTokenResult = boolean;
+
+export type GenerateLastQueryCacheKeyResult = string;
+
+export type ShouldResetQueryResult = boolean;
 
 export type UpdateLastQueryResult = void;
-
-export type GetTotalItemsResult = number;
 
 export type TransformNewsListResult = PaginatedNews;

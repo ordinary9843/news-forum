@@ -5,6 +5,8 @@ import {
   ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
 
+import { boolean } from 'boolean';
+
 import { Request } from '../interface';
 
 import {
@@ -32,9 +34,11 @@ export class NewsController {
     @Query() query: GetNewsListQuery,
   ): Promise<GetNewsListResult> {
     const { clientIp } = request;
+    const { reset, ...restQuery } = query;
 
     return await this.newsService.getNewsList({
-      ...query,
+      ...restQuery,
+      reset: boolean(reset),
       clientIp,
     });
   }

@@ -14,28 +14,26 @@ import { NewsVoteCountService } from '../../modules/news-vote-count/service.js';
 
 import { RedisService } from '../../modules/redis/service.js';
 
-import {
-  GET_NEWS_LIST_LIMIT,
-  LAST_PUBLISHED_AT_CACHE_TTL,
-} from './constant.js';
+import { GET_NEWS_LIST_LIMIT, LAST_QUERY_CACHE_TTL } from './constant.js';
 import {
   CreateNewsParams,
   CreateNewsResult,
   DoesNewsExistByGuidResult,
   DoesNewsExistResult,
-  GenerateNewsListCacheKeyResult,
-  GetLastQueryParams,
-  GetLastQueryResult,
+  GenerateLastQueryCacheKeyResult,
+  ShouldResetQueryParams,
+  ShouldResetQueryResult,
   GetNewsListParams,
   GetNewsListResult,
-  GetTotalItemsOptions,
-  GetTotalItemsResult,
   TransformNewsListParams,
   TransformNewsListResult,
   UpdateLastQueryParams,
   UpdateLastQueryResult,
   UpdateNewsByGuidParams,
   UpdateNewsByGuidResult,
+  DecodeNextTokenResult,
+  EncodeNextTokenResult,
+  IsValidNextTokenResult,
 } from './type.js';
 
 @Injectable()
@@ -50,51 +48,54 @@ export class NewsService {
   ) {}
 
   async getNewsList(params: GetNewsListParams): Promise<GetNewsListResult> {
-    const { clientIp, reset = false, category = undefined } = params;
-    const cacheKey = this.generateLastPublishedAtCacheKey(clientIp);
-    const { lastPage, lastPublishedAt } = await this.getLastQuery(cacheKey, {
+    const {
+      clientIp,
+      reset = false,
+      nextToken = null,
+      limit = GET_NEWS_LIST_LIMIT,
+      category = undefined,
+    } = params;
+    const cacheKey = this.generateLastQueryCacheKey(clientIp);
+    const shouldResetQuery = await this.shouldResetQuery(cacheKey, {
       reset,
+      nextToken,
+      limit,
       category,
     });
-    const totalItems = await this.getTotalItems({
+    const decodedNextToken = !shouldResetQuery
+      ? this.decodeNextToken(_.get(params, 'nextToken', null))
+      : null;
+    const items = await this.newsRepository.find({
+      relations: {
+        vote: true,
+        voteCounts: true,
+      },
+      where: {
+        isCollected: true,
+        ...(decodedNextToken
+          ? {
+              publishedAt: LessThan(
+                DateTime.fromJSDate(new Date(decodedNextToken)).toJSDate(),
+              ),
+            }
+          : {}),
+        ...(category ? { category } : {}),
+      },
+      take: limit,
+      order: {
+        publishedAt: 'DESC',
+        id: 'DESC',
+      },
+    });
+    await this.updateLastQuery(cacheKey, {
+      limit,
       category,
     });
-    const totalPages = Math.ceil(totalItems / GET_NEWS_LIST_LIMIT);
-    let items = [];
-    if (lastPage <= totalPages) {
-      items = await this.newsRepository.find({
-        relations: {
-          vote: true,
-          voteCounts: true,
-        },
-        where: {
-          isCollected: true,
-          ...(lastPublishedAt
-            ? {
-                publishedAt: LessThan(
-                  DateTime.fromJSDate(new Date(lastPublishedAt)).toJSDate(),
-                ),
-              }
-            : {}),
-          ...(category ? { category } : {}),
-        },
-        take: GET_NEWS_LIST_LIMIT,
-        order: {
-          publishedAt: 'DESC',
-          id: 'DESC',
-        },
-      });
-      await this.updateLastQuery(cacheKey, {
-        lastPage,
-        items,
-        category,
-      });
-    }
+
+    const lastPublishedAt = _.get(_.last(items), 'publishedAt', null);
 
     return this.transformNewsList({
-      totalItems,
-      totalPages,
-      lastPage,
+      nextToken: this.encodeNextToken(lastPublishedAt || decodedNextToken),
       items,
     });
   }
@@ -133,77 +134,82 @@ export class NewsService {
     return await this.newsRepository.save(existingNews);
   }
 
-  private generateLastPublishedAtCacheKey(
+  private generateLastQueryCacheKey(
     clientIp: string,
-  ): GenerateNewsListCacheKeyResult {
-    return `news_published_at_${clientIp}`;
+  ): GenerateLastQueryCacheKeyResult {
+    return `news_last_query_${clientIp}`;
   }
 
-  private async getLastQuery(
+  private async shouldResetQuery(
     cacheKey: string,
-    params: GetLastQueryParams,
-  ): Promise<GetLastQueryResult> {
-    const { reset, category } = params;
-    let lastPage = 1;
-    let lastPublishedAt = undefined;
+    params: ShouldResetQueryParams,
+  ): Promise<ShouldResetQueryResult> {
+    const { reset, nextToken, limit, category } = params;
     if (await this.redisService.exists(cacheKey)) {
-      const lastQuery = this.jsonService.parse(
+      const { lastLimit, lastCategory } = this.jsonService.parse(
         await this.redisService.get(cacheKey),
       );
-
-      lastPage = _.get(lastQuery, 'lastPage', 1);
-      lastPublishedAt = _.get(lastQuery, 'lastPublishedAt');
-      const lastCategory = _.get(lastQuery, 'lastCategory');
-      if (reset || category !== lastCategory) {
-        lastPage = 1;
-        lastPublishedAt = undefined;
+      if (
+        reset ||
+        !this.isValidNextToken(nextToken) ||
+        limit !== lastLimit ||
+        category !== lastCategory
+      ) {
+        return true;
       }
     }
 
-    return {
-      lastPage,
-      lastPublishedAt,
-    };
+    return false;
   }
 
   private async updateLastQuery(
     cacheKey: string,
     params: UpdateLastQueryParams,
   ): Promise<UpdateLastQueryResult> {
-    const { lastPage, items, category } = params;
+    const { limit, category } = params;
     await this.redisService.set(
       cacheKey,
       this.jsonService.stringify({
-        lastPage: lastPage + 1,
+        lastLimit: limit,
         lastCategory: category,
-        lastPublishedAt: _.get(_.last(items), 'publishedAt', undefined),
       }),
-      LAST_PUBLISHED_AT_CACHE_TTL,
+      LAST_QUERY_CACHE_TTL,
     );
   }
 
-  private async getTotalItems(
-    options: GetTotalItemsOptions,
-  ): Promise<GetTotalItemsResult> {
-    const { category } = options;
+  private encodeNextToken(nextToken: string | null): EncodeNextTokenResult {
+    if (!this.isValidNextToken(nextToken)) {
+      return null;
+    }
 
-    return await this.newsRepository.count({
-      where: {
-        isCollected: true,
-        ...(category ? { category } : {}),
-      },
-    });
+    return Buffer.from(nextToken, 'utf-8').toString('base64');
+  }
+
+  private decodeNextToken(encodedToken: string | null): DecodeNextTokenResult {
+    if (!this.isValidNextToken(encodedToken)) {
+      return null;
+    }
+
+    return Buffer.from(encodedToken, 'base64').toString('utf-8');
+  }
+
+  private isValidNextToken(nextToken: string | null): IsValidNextTokenResult {
+    return !(
+      _.isNil(nextToken) ||
+      nextToken === 'undefined' ||
+      nextToken === 'null' ||
+      nextToken === ''
+    );
   }
 
   private transformNewsList(
     params: TransformNewsListParams,
   ): TransformNewsListResult {
-    const { totalItems, totalPages, lastPage, items } = params;
+    const { nextToken, items } = params;
 
     return {
-      totalItems,
-      totalPages,
-      page: lastPage,
+      nextToken,
+      hasItems: items.length > 0,
       items: _.map(items, (item) => {
         const { publishedAt, vote, voteCounts } = item;
         _.unset(item, 'vote');
@@ -225,6 +231,7 @@ export class NewsService {
           ]),
           publishedAt: this.dateService.format(publishedAt),
           isVoted: !_.isEmpty(vote),
+          votedOption: _.get(vote, 'bias', null),
           voteStatistics:
             this.newsVoteCountService.calculateVotePercentages(voteCounts),
         };
