@@ -15,7 +15,7 @@
       <lottie-vue-player
         v-if="showAnimation"
         class="reportAnimation"
-        style="height: 220px; width: 300px;"
+        style="height: 220px; width: 300px"
         autoplay
         :loop="true"
         background="transparent"
@@ -37,11 +37,14 @@
         <div>{{ item.value }} %</div>
       </a-row>
     </div>
+    <div class="votedCount">
+      {{ $t('home.votedCountText1') }} {{ totalVotedCount }}
+      {{ $t('home.votedCountText2') }}
+    </div>
   </a-modal>
 </template>
 
 <script>
-import { mapState } from 'vuex'
 export default {
   name: 'VoteResultDialog',
   components: {},
@@ -63,7 +66,6 @@ export default {
     }
   },
   computed: {
-    ...mapState([]),
     syncVisible: {
       get() {
         return this.visible
@@ -75,26 +77,35 @@ export default {
     reportFeedbackList() {
       return [
         {
-          key: 'completelyImpartial',
-          title: this.$t('home.completelyImpartial'),
-          value: this.data.completelyImpartial,
+          key: 'fair',
+          title: this.$t('home.fair'),
+          value: this.data.fair?.percent || 0,
         },
         {
-          key: 'somewhatBiased',
-          title: this.$t('home.somewhatBiased'),
-          value: this.data.somewhatBiased,
+          key: 'slightlyBiased',
+          title: this.$t('home.slightlyBiased'),
+          value: this.data.slightlyBiased?.percent || 0,
         },
         {
-          key: 'veryBiased',
-          title: this.$t('home.veryBiased'),
-          value: this.data.veryBiased,
+          key: 'heavilyBiased',
+          title: this.$t('home.heavilyBiased'),
+          value: this.data.heavilyBiased?.percent || 0,
         },
         {
-          key: 'unableToJudge',
-          title: this.$t('home.unableToJudge'),
-          value: this.data.unableToJudge,
+          key: 'undetermined',
+          title: this.$t('home.undetermined'),
+          value: this.data.undetermined?.percent || 0,
         },
       ]
+    },
+    totalVotedCount() {
+      return (
+        this.data.fair?.count ||
+        0 + this.data.slightlyBiased?.count ||
+        0 + this.data.heavilyBiased?.count ||
+        0 + this.data.undetermined?.count ||
+        0
+      )
     },
   },
   watch: {
@@ -126,5 +137,10 @@ export default {
 }
 .feedbackItem {
   margin-bottom: 5px;
+}
+.votedCount {
+  text-align: right;
+  font-size: 0.8em;
+  margin-top: 15px;
 }
 </style>

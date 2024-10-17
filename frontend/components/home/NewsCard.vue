@@ -76,66 +76,98 @@
       </a-dropdown>
     </a-row>
     <!-- 內容 -->
-    <div class="newsDescription" @click="openNews">{{ data.description }}</div>
+    <div class="newsDescription">
+      {{ data.brief }}
+    </div>
+    <div class="viewMoreLine">
+      <a-button type="link" @click="viewMore">
+        {{ $t('home.viewMore') }}
+      </a-button>
+    </div>
     <!-- 對報導的看法 -->
     <a-row class="myButtons" type="flex" align="middle" justify="start">
       <div class="question">{{ $t('home.mediaReportingImpartiality') }}</div>
       <a-space size="small" class="answerButtons">
         <!-- 非常公正 -->
         <a-button
-          v-if="!data.impartiality"
+          v-if="!data.isVoted"
           size="small"
           icon="smile"
-          @click="selectImpartiality('completelyImpartial')"
+          @click="vote('FAIR')"
         >
-          {{ $t('home.completelyImpartial') }}
+          {{ $t('home.fair') }}
         </a-button>
-        <div v-else class="answerText">
-          {{ data.impartiality.completelyImpartial || '--' }}%
-          {{ $t('home.completelyImpartial') }}
+        <div
+          v-else
+          :class="[data.votedOption === 'FAIR' ? 'selected' : '', 'answerText']"
+        >
+          {{ data.voteStatistics.fair?.percent || 0 }}%
+          {{ $t('home.fair') }}
         </div>
         <!-- 有點偏頗 -->
         <a-button
-          v-if="!data.impartiality"
+          v-if="!data.isVoted"
           size="small"
           icon="meh"
-          @click="selectImpartiality('somewhatBiased')"
+          @click="vote('SLIGHTLY_BIASED')"
         >
-          {{ $t('home.somewhatBiased') }}
+          {{ $t('home.slightlyBiased') }}
         </a-button>
-        <div v-else class="answerText">
-          {{ data.impartiality.somewhatBiased || '--' }}%
-          {{ $t('home.somewhatBiased') }}
+        <div
+          v-else
+          :class="[
+            data.votedOption === 'SLIGHTLY_BIASED' ? 'selected' : '',
+            'answerText',
+          ]"
+        >
+          {{ data.voteStatistics.slightlyBiased?.percent || 0 }}%
+          {{ $t('home.slightlyBiased') }}
         </div>
         <!-- 非常偏頗 -->
         <a-button
-          v-if="!data.impartiality"
+          v-if="!data.isVoted"
           size="small"
           icon="frown"
-          @click="selectImpartiality('veryBiased')"
+          @click="vote('HEAVILY_BIASED')"
         >
-          {{ $t('home.veryBiased') }}
+          {{ $t('home.heavilyBiased') }}
         </a-button>
-        <div v-else class="answerText">
-          {{ data.impartiality.veryBiased || '--' }}%
-          {{ $t('home.veryBiased') }}
+        <div
+          v-else
+          :class="[
+            data.votedOption === 'HEAVILY_BIASED' ? 'selected' : '',
+            'answerText',
+          ]"
+        >
+          {{ data.voteStatistics.heavilyBiased?.percent || 0 }}%
+          {{ $t('home.heavilyBiased') }}
         </div>
         <!-- 無法判斷 -->
         <a-button
-          v-if="!data.impartiality"
+          v-if="!data.isVoted"
           size="small"
           icon="close"
-          @click="selectImpartiality('unableToJudge')"
+          @click="vote('UNDETERMINED')"
         >
-          {{ $t('home.unableToJudge') }}
+          {{ $t('home.undetermined') }}
         </a-button>
-        <div v-else class="answerText">
-          {{ data.impartiality.unableToJudge || '--' }}%
-          {{ $t('home.unableToJudge') }}
+        <div
+          v-else
+          :class="[
+            data.votedOption === 'UNDETERMINED' ? 'selected' : '',
+            'answerText',
+          ]"
+        >
+          {{ data.voteStatistics.undetermined?.percent || 0 }}%
+          {{ $t('home.undetermined') }}
         </div>
       </a-space>
     </a-row>
     <VoteResultDialog :visible.sync="voteResultDialog" :data="voteResultData" />
+    <NewsContentDialog
+      :visible.sync="newsContentDialog"
+      :data="newsContentData"
+    />
   </div>
 </template>
 
@@ -145,9 +177,10 @@ import ClipboardJS from 'clipboard'
 import LineIcon from '@/components/icon/LineIcon.vue'
 import FbIcon from '@/components/icon/FbIcon.vue'
 import VoteResultDialog from '@/components/home/VoteResultDialog.vue'
+import NewsContentDialog from '@/components/home/NewsContentDialog.vue'
 export default {
   name: 'NewsCard',
-  components: { LineIcon, FbIcon, VoteResultDialog },
+  components: { LineIcon, FbIcon, VoteResultDialog, NewsContentDialog },
   props: {
     data: {
       type: Object,
@@ -166,10 +199,19 @@ export default {
       clipboard: null,
       voteResultDialog: false,
       voteResultData: {},
+      newsContentDialog: false,
     }
   },
   computed: {
     ...mapState(['newsList', 'windowWidth']),
+    newsContentData() {
+      const { link, title, description } = this.data
+      return {
+        link,
+        title,
+        description,
+      }
+    },
   },
   created() {},
   mounted() {
@@ -186,7 +228,7 @@ export default {
     this.clipboard = null
   },
   methods: {
-    ...mapActions(['updateNewsImpartiality']),
+    ...mapActions(['updateNewsVote']),
     openNews() {
       window.open(this.data.link)
     },
@@ -209,13 +251,30 @@ export default {
         'width=500,height=500'
       )
     },
-    async selectImpartiality(value) {
-      await this.updateNewsImpartiality({
-        data: value,
+    async vote(value) {
+      const result = await this.updateNewsVote({
+        data: {
+          bias: value,
+        },
         newsIndex: this.dataIndex,
+        newsId: this.data.id,
       })
-      this.voteResultData = this.newsList[this.dataIndex].impartiality || {}
+      if (
+        result.status !== 'success' &&
+        result.message.includes('Too many requests')
+      ) {
+        this.$message.warning(this.$t('home.voteLimitExceededMessage'))
+        return
+      }
+      if (result.status === 'success') {
+        this.voteResultData = result.data || {}
+      } else {
+        this.voteResultData = this.newsList[this.dataIndex].voteStatistics || {}
+      }
       this.voteResultDialog = true
+    },
+    viewMore() {
+      this.newsContentDialog = true
     },
   },
 }
@@ -233,6 +292,9 @@ export default {
   line-height: 1.4;
   margin-bottom: 6px;
   cursor: pointer;
+  &:hover {
+    text-decoration: underline;
+  }
 }
 .myButtons {
   margin-left: auto;
@@ -249,8 +311,13 @@ export default {
 }
 .newsDescription {
   font-size: 0.95rem;
+  button > span:hover {
+    text-decoration: underline;
+  }
+}
+.viewMoreLine {
+  text-align: right;
   margin-bottom: 15px;
-  cursor: pointer;
 }
 .shareIcon {
   padding: 5px;
@@ -291,5 +358,9 @@ export default {
 }
 .answerText {
   color: $fb-blue-light;
+  &.selected {
+    font-weight: bold;
+    font-size: 1.2em;
+  }
 }
 </style>
