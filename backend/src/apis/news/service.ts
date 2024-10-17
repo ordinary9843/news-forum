@@ -33,6 +33,7 @@ import {
   UpdateNewsByGuidResult,
   DecodeNextTokenResult,
   EncodeNextTokenResult,
+  IsValidNextTokenResult,
 } from './type.js';
 
 @Injectable()
@@ -59,9 +60,9 @@ export class NewsService {
       limit,
       category,
     });
-    const decodedNextToken = this.decodeNextToken(
-      !shouldResetQuery ? _.get(params, 'nextToken', undefined) : undefined,
-    );
+    const decodedNextToken = !shouldResetQuery
+      ? this.decodeNextToken(_.get(params, 'nextToken', null))
+      : null;
     const items = await this.newsRepository.find({
       relations: {
         vote: true,
@@ -89,9 +90,11 @@ export class NewsService {
       category,
     });
 
+    const lastPublishedAt = _.get(_.last(items), 'publishedAt', null);
+
     return this.transformNewsList({
       nextToken: this.encodeNextToken(
-        _.get(_.last(items), 'publishedAt', undefined),
+        lastPublishedAt ? lastPublishedAt : decodedNextToken,
       ),
       items,
     });
@@ -142,7 +145,6 @@ export class NewsService {
     params: ShouldResetQueryParams,
   ): Promise<ShouldResetQueryResult> {
     const { reset, limit, category } = params;
-    console.log(params);
     if (await this.redisService.exists(cacheKey)) {
       const { lastLimit, lastCategory } = this.jsonService.parse(
         await this.redisService.get(cacheKey),
@@ -170,20 +172,29 @@ export class NewsService {
     );
   }
 
-  encodeNextToken(nextToken: string | undefined): EncodeNextTokenResult {
-    if (!nextToken) {
-      return undefined;
+  private encodeNextToken(nextToken: string | null): EncodeNextTokenResult {
+    if (!this.isValidNextToken(nextToken)) {
+      return null;
     }
 
     return Buffer.from(nextToken, 'utf-8').toString('base64');
   }
 
-  decodeNextToken(encodedToken: string): DecodeNextTokenResult {
-    if (!encodedToken) {
-      return undefined;
+  private decodeNextToken(encodedToken: string | null): DecodeNextTokenResult {
+    if (!this.isValidNextToken(encodedToken)) {
+      return null;
     }
 
     return Buffer.from(encodedToken, 'base64').toString('utf-8');
+  }
+
+  private isValidNextToken(nextToken: string | null): IsValidNextTokenResult {
+    return !(
+      _.isNil(nextToken) ||
+      nextToken === 'undefined' ||
+      nextToken === 'null' ||
+      nextToken === ''
+    );
   }
 
   private transformNewsList(

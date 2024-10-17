@@ -53,9 +53,11 @@ export type CreateNewsResult = NewsEntity;
 
 export type UpdateNewsByGuidResult = NewsEntity;
 
-export type EncodeNextTokenResult = string | undefined;
+export type EncodeNextTokenResult = string | null;
 
-export type DecodeNextTokenResult = string | undefined;
+export type DecodeNextTokenResult = string | null;
+
+export type IsValidNextTokenResult = boolean;
 
 export type GenerateLastQueryCacheKeyResult = string;
 

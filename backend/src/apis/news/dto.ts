@@ -1,7 +1,14 @@
 import { HttpStatus } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 
-import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 import { Category, Locale } from '../../entities/news/enum.js';
 import { Bias } from '../../entities/news-vote/enum.js';
@@ -9,6 +16,7 @@ import { ApiResponse } from '../interface.js';
 
 import { VoteStatistics } from '../news-vote/dto.js';
 
+import { GET_NEWS_LIST_LIMIT } from './constant.js';
 import { GetNewsListResult } from './type.js';
 
 export class Item {
@@ -81,6 +89,12 @@ export class GetNewsListQuery {
   @IsString()
   @IsOptional()
   nextToken?: string;
+
+  @ApiProperty({ example: GET_NEWS_LIST_LIMIT })
+  @Min(10)
+  @Max(100)
+  @IsOptional()
+  limit?: number;
 
   @ApiProperty({ example: Category.BUSINESS })
   @IsEnum(Category)
