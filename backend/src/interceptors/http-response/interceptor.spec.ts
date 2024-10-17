@@ -1,6 +1,6 @@
 // npm run test -- ./src/interceptors/http-response/interceptor.spec.ts
 
-import { CallHandler, ExecutionContext } from '@nestjs/common';
+import { ExecutionContext } from '@nestjs/common';
 import { HttpStatus } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { Response } from 'express';
@@ -8,70 +8,53 @@ import { Response } from 'express';
 import { of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { BaseTestSuite } from '../../../test/base/test-suite/abstract.test.suite';
-import {
-  InitializeResult,
-  RunTestsResult,
-} from '../../../test/base/test-suite/type';
-
 import { HttpResponseInterceptor } from './interceptor';
 
-const success: boolean = true;
-const statusCode: HttpStatus = HttpStatus.OK;
-const message: string = 'Success';
-const data: Record<string, unknown> = { key: 'value' };
-const executionContext: Partial<ExecutionContext> = {
+const mockSuccess = true;
+const mockStatusCode = HttpStatus.OK;
+const mockMessage = 'Success';
+const mockResult = { key: 'value' };
+const mockExecutionContext = {
   switchToHttp: jest.fn().mockReturnValue({
     getResponse: jest.fn().mockReturnValue({
-      statusCode,
-    } as unknown as Response),
+      statusCode: mockStatusCode,
+    }),
   }),
-};
-const callHandler: Partial<CallHandler> = {
-  handle: () => of(data),
+} as Partial<ExecutionContext>;
+const mockCallHandler = {
+  handle: () => of(mockResult),
 };
 
-class HttpResponseInterceptorTest extends BaseTestSuite {
-  private httpResponseInterceptor: HttpResponseInterceptor;
+describe('HttpResponseInterceptor', () => {
+  let httpResponseInterceptor: HttpResponseInterceptor;
 
-  async initialize(): Promise<InitializeResult> {
-    this.module = await Test.createTestingModule({
+  beforeEach(async () => {
+    const module = await Test.createTestingModule({
       providers: [HttpResponseInterceptor],
     }).compile();
-    this.httpResponseInterceptor = this.module.get<HttpResponseInterceptor>(
+    httpResponseInterceptor = module.get<HttpResponseInterceptor>(
       HttpResponseInterceptor,
     );
-  }
+  });
 
-  async runTests(): Promise<RunTestsResult> {
-    beforeEach(async () => {
-      await this.initialize();
-    });
+  afterEach(() => {
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+  });
 
-    afterEach(() => {
-      jest.clearAllMocks();
-      jest.restoreAllMocks();
-    });
-
-    it('should intercept and modify the response', () => {
-      this.httpResponseInterceptor
-        .intercept(
-          executionContext as ExecutionContext,
-          callHandler as CallHandler,
-        )
-        .pipe(
-          map((response: Response) => {
-            expect(response).toEqual({
-              success,
-              statusCode,
-              message,
-              data,
-            });
-          }),
-        )
-        .subscribe();
-    });
-  }
-}
-
-new HttpResponseInterceptorTest().runTests();
+  it('should intercept and modify the response', () => {
+    httpResponseInterceptor
+      .intercept(mockExecutionContext as ExecutionContext, mockCallHandler)
+      .pipe(
+        map((response: Response) => {
+          expect(response).toEqual({
+            success: mockSuccess,
+            statusCode: mockStatusCode,
+            message: mockMessage,
+            result: mockResult,
+          });
+        }),
+      )
+      .subscribe();
+  });
+});
