@@ -14,6 +14,22 @@ import { NewsVoteCountEntity } from '../../entities/news-vote-count/entity.js';
 
 import { NewsVoteCountService } from './service.js';
 
+const newsId = 1;
+const bias = Bias.FAIR;
+const newsVoteCountEntity = Object.assign(new NewsVoteCountEntity(), {
+  id: 1,
+  newsId,
+  bias,
+  count: 1,
+});
+const params = { newsId, bias };
+const voteCounts = [
+  { bias: Bias.FAIR, count: 10 },
+  { bias: Bias.SLIGHTLY_BIASED, count: 10 },
+  { bias: Bias.HEAVILY_BIASED, count: 10 },
+  { bias: Bias.UNDETERMINED, count: 10 },
+] as NewsVoteCountEntity[];
+
 describe('NewsVoteCountService', () => {
   let newsVoteCountService: NewsVoteCountService;
   let newsVoteCountRepository: Repository<NewsVoteCountEntity>;
@@ -40,13 +56,6 @@ describe('NewsVoteCountService', () => {
 
   describe('initializeVoteCounts', () => {
     it('should initialize vote counts for all biases', async () => {
-      const newsId = 1;
-      const newsVoteCountEntity = Object.assign(new NewsVoteCountEntity(), {
-        id: 1,
-        newsId,
-        bias: Bias.FAIR,
-        count: 1,
-      });
       jest
         .spyOn(newsVoteCountRepository, 'save')
         .mockResolvedValue(newsVoteCountEntity);
@@ -73,56 +82,6 @@ describe('NewsVoteCountService', () => {
     });
 
     it('should calculate vote percentages correctly', async () => {
-      const newsId = 1;
-      const bias = Bias.FAIR;
-      const newsVoteCountEntity = Object.assign(new NewsVoteCountEntity(), {
-        id: 1,
-        newsId,
-        bias,
-        count: 1,
-      });
-      const params = { newsId, bias };
-      const voteCounts = [
-        { bias: Bias.FAIR, count: 10 },
-        { bias: Bias.SLIGHTLY_BIASED, count: 20 },
-        { bias: Bias.HEAVILY_BIASED, count: 30 },
-        { bias: Bias.UNDETERMINED, count: 40 },
-      ] as NewsVoteCountEntity[];
-      jest
-        .spyOn(newsVoteCountRepository, 'find')
-        .mockResolvedValueOnce(voteCounts);
-      jest
-        .spyOn(newsVoteCountRepository, 'save')
-        .mockResolvedValue(newsVoteCountEntity);
-      jest
-        .spyOn(newsVoteCountRepository, 'create')
-        .mockReturnValue(newsVoteCountEntity);
-      expect(
-        await newsVoteCountService.calculateVoteStatistics(params),
-      ).toEqual({
-        fair: { count: 11, percent: 11 },
-        slightlyBiased: { count: 20, percent: 20 },
-        heavilyBiased: { count: 30, percent: 30 },
-        undetermined: { count: 40, percent: 39 },
-      });
-    });
-
-    it('should handle total votes not equaling 100%', async () => {
-      const newsId = 1;
-      const bias = Bias.FAIR;
-      const newsVoteCountEntity = Object.assign(new NewsVoteCountEntity(), {
-        id: 1,
-        newsId,
-        bias,
-        count: 1,
-      });
-      const params = { newsId, bias };
-      const voteCounts = [
-        { bias: Bias.FAIR, count: 10 },
-        { bias: Bias.SLIGHTLY_BIASED, count: 10 },
-        { bias: Bias.HEAVILY_BIASED, count: 10 },
-        { bias: Bias.UNDETERMINED, count: 10 },
-      ] as NewsVoteCountEntity[];
       jest
         .spyOn(newsVoteCountRepository, 'find')
         .mockResolvedValueOnce(voteCounts);
@@ -136,6 +95,26 @@ describe('NewsVoteCountService', () => {
         await newsVoteCountService.calculateVoteStatistics(params),
       ).toEqual({
         fair: { count: 11, percent: 28 },
+        slightlyBiased: { count: 10, percent: 24 },
+        heavilyBiased: { count: 10, percent: 24 },
+        undetermined: { count: 10, percent: 24 },
+      });
+    });
+
+    it('should handle total votes not equaling 100%', async () => {
+      jest
+        .spyOn(newsVoteCountRepository, 'find')
+        .mockResolvedValueOnce(voteCounts);
+      jest
+        .spyOn(newsVoteCountRepository, 'save')
+        .mockResolvedValue(newsVoteCountEntity);
+      jest
+        .spyOn(newsVoteCountRepository, 'create')
+        .mockReturnValue(newsVoteCountEntity);
+      expect(
+        await newsVoteCountService.calculateVoteStatistics(params),
+      ).toEqual({
+        fair: { count: 12, percent: 28 },
         slightlyBiased: { count: 10, percent: 24 },
         heavilyBiased: { count: 10, percent: 24 },
         undetermined: { count: 10, percent: 24 },

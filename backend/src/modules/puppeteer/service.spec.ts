@@ -10,13 +10,10 @@ import { PuppeteerService } from './service.js';
 jest.mock('puppeteer');
 
 const mockedPuppeteer = puppeteer as jest.Mocked<typeof puppeteer>;
-const mockConfigService = {
-  get: jest.fn().mockReturnValue('/path/to/chrome'),
-} as Pick<ConfigService, 'get'>;
 const mockPage = {
   setExtraHTTPHeaders: jest.fn(),
   close: jest.fn(),
-} as Pick<Page, 'setExtraHTTPHeaders' | 'close'>;
+} as Partial<Page>;
 const mockBrowser = {
   newPage: jest.fn().mockResolvedValue(mockPage),
   close: jest.fn(),
@@ -25,7 +22,7 @@ const mockBrowser = {
     pid: 1234,
     kill: jest.fn().mockReturnValue(true),
   }),
-} as Pick<Browser, 'newPage' | 'close' | 'pages' | 'process'>;
+} as Partial<Browser>;
 
 describe('PuppeteerService', () => {
   let puppeteerService: PuppeteerService;
@@ -36,7 +33,9 @@ describe('PuppeteerService', () => {
         PuppeteerService,
         {
           provide: ConfigService,
-          useValue: mockConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue('/path/to/chrome'),
+          },
         },
       ],
     }).compile();
@@ -76,9 +75,12 @@ describe('PuppeteerService', () => {
 
   describe('closeAllPages', () => {
     it('should close all pages', async () => {
-      jest.spyOn(mockBrowser, 'pages').mockResolvedValue([mockPage as Page]);
+      jest.spyOn(mockBrowser, 'pages').mockResolvedValue([mockPage] as Page[]);
+      jest.spyOn(puppeteerService, 'closePage').mockResolvedValue(null);
       await puppeteerService.closeAllPages(mockBrowser as Browser);
-      expect(mockPage.close).toHaveBeenCalledTimes(1);
+      expect(mockBrowser.pages).toHaveBeenCalledTimes(1);
+      expect(puppeteerService.closePage).toHaveBeenCalledWith(mockPage);
+      expect(puppeteerService.closePage).toHaveBeenCalledTimes(1);
     });
 
     it('should not throw if there are no pages', async () => {
