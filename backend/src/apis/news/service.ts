@@ -193,6 +193,7 @@ export class NewsService {
 
     return {
       nextToken,
+      hasItems: items.length > 0,
       items: _.map(items, (item) => {
         const { publishedAt, vote, voteCounts } = item;
         _.unset(item, 'vote');

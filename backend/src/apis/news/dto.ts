@@ -55,6 +55,11 @@ export class PaginatedNews {
   })
   nextToken: string;
 
+  @ApiProperty({
+    example: true,
+  })
+  hasItems: boolean;
+
   @ApiProperty({ type: [Item] })
   items: Item[];
 }
