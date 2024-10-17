@@ -1,14 +1,9 @@
 import { HttpStatus } from '@nestjs/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import {
-  IsBoolean,
-  IsEnum,
-  IsOptional,
-  IsString,
-  Max,
-  Min,
-} from 'class-validator';
+import { boolean } from 'boolean';
+import { Transform } from 'class-transformer';
+import { IsEnum, IsOptional, IsString, Max, Min } from 'class-validator';
 
 import { Category, Locale } from '../../entities/news/enum.js';
 import { Bias } from '../../entities/news-vote/enum.js';
@@ -78,9 +73,9 @@ export class PaginatedNews {
 
 export class GetNewsListQuery {
   @ApiPropertyOptional({ example: false })
-  @IsBoolean()
+  @Transform(({ value }) => boolean(value))
   @IsOptional()
-  reset?: boolean;
+  reset?: string;
 
   @ApiPropertyOptional({
     example:
