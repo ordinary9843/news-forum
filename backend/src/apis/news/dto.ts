@@ -4,6 +4,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 
 import { Category, Locale } from '../../entities/news/enum.js';
+import { Bias } from '../../entities/news-vote/enum.js';
 import { ApiResponse } from '../interface.js';
 
 import { VoteStatistics } from '../news-vote/dto.js';
@@ -43,6 +44,9 @@ export class Item {
 
   @ApiProperty({ example: false })
   isVoted: boolean;
+
+  @ApiProperty({ example: Bias.FAIR })
+  votedOption: Bias;
 
   @ApiProperty({ type: VoteStatistics })
   voteStatistics: VoteStatistics;
