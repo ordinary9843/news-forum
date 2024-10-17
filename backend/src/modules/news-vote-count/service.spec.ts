@@ -16,14 +16,14 @@ import { NewsVoteCountService } from './service.js';
 
 const newsId = 1;
 const bias = Bias.FAIR;
-const newsVoteCountEntity = Object.assign(new NewsVoteCountEntity(), {
+const mockNewsVoteCountEntity = Object.assign(new NewsVoteCountEntity(), {
   id: 1,
   newsId,
   bias,
   count: 1,
 });
-const params = { newsId, bias };
-const voteCounts = [
+const mockParams = { newsId, bias };
+const mockVoteCounts = [
   { bias: Bias.FAIR, count: 10 },
   { bias: Bias.SLIGHTLY_BIASED, count: 10 },
   { bias: Bias.HEAVILY_BIASED, count: 10 },
@@ -58,10 +58,10 @@ describe('NewsVoteCountService', () => {
     it('should initialize vote counts for all biases', async () => {
       jest
         .spyOn(newsVoteCountRepository, 'save')
-        .mockResolvedValue(newsVoteCountEntity);
+        .mockResolvedValue(mockNewsVoteCountEntity);
       jest
         .spyOn(newsVoteCountRepository, 'create')
-        .mockReturnValue(newsVoteCountEntity);
+        .mockReturnValue(mockNewsVoteCountEntity);
       await newsVoteCountService.initializeVoteCounts(newsId);
       expect(newsVoteCountRepository.create).toHaveBeenCalledTimes(
         Object.values(Bias).length,
@@ -84,15 +84,15 @@ describe('NewsVoteCountService', () => {
     it('should calculate vote percentages correctly', async () => {
       jest
         .spyOn(newsVoteCountRepository, 'find')
-        .mockResolvedValueOnce(voteCounts);
+        .mockResolvedValueOnce(mockVoteCounts);
       jest
         .spyOn(newsVoteCountRepository, 'save')
-        .mockResolvedValue(newsVoteCountEntity);
+        .mockResolvedValue(mockNewsVoteCountEntity);
       jest
         .spyOn(newsVoteCountRepository, 'create')
-        .mockReturnValue(newsVoteCountEntity);
+        .mockReturnValue(mockNewsVoteCountEntity);
       expect(
-        await newsVoteCountService.calculateVoteStatistics(params),
+        await newsVoteCountService.calculateVoteStatistics(mockParams),
       ).toEqual({
         fair: { count: 11, percent: 28 },
         slightlyBiased: { count: 10, percent: 24 },
@@ -104,15 +104,15 @@ describe('NewsVoteCountService', () => {
     it('should handle total votes not equaling 100%', async () => {
       jest
         .spyOn(newsVoteCountRepository, 'find')
-        .mockResolvedValueOnce(voteCounts);
+        .mockResolvedValueOnce(mockVoteCounts);
       jest
         .spyOn(newsVoteCountRepository, 'save')
-        .mockResolvedValue(newsVoteCountEntity);
+        .mockResolvedValue(mockNewsVoteCountEntity);
       jest
         .spyOn(newsVoteCountRepository, 'create')
-        .mockReturnValue(newsVoteCountEntity);
+        .mockReturnValue(mockNewsVoteCountEntity);
       expect(
-        await newsVoteCountService.calculateVoteStatistics(params),
+        await newsVoteCountService.calculateVoteStatistics(mockParams),
       ).toEqual({
         fair: { count: 12, percent: 28 },
         slightlyBiased: { count: 10, percent: 24 },

@@ -1,6 +1,5 @@
 import { inspect } from 'util';
 
-import { extractFromHtml } from '@extractus/article-extractor';
 import {
   BadRequestException,
   Injectable,
@@ -12,7 +11,6 @@ import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import axios from 'axios';
 import { boolean } from 'boolean';
-import { convert } from 'html-to-text';
 import _ from 'lodash';
 import { DateTime } from 'luxon';
 import { DataSource, IsNull, LessThan, Repository } from 'typeorm';
@@ -24,6 +22,8 @@ import { CATEGORY_MAPPING } from '../../entities/news/constant.js';
 import { Category, Locale } from '../../entities/news/enum.js';
 import { NewsVoteCountService } from '../news-vote-count/service.js';
 import { PuppeteerService } from '../puppeteer/service.js';
+
+import { SummarizeService } from '../summarize/service.js';
 
 import {
   GET_PENDING_RETRIEVAL_GOOGLE_NEWS_LIMIT,
@@ -37,7 +37,6 @@ import {
   FetchGoogleNewsResult,
   IsValidGoogleNewsItemResult,
   ProcessGoogleNewsResult,
-  ExtractNewsFromHtmlResult,
   GetPendingRetrievalGoogleNewsResult,
   UpdateGoogleNewsResult,
   CreateGoogleNewsResult,
@@ -45,8 +44,6 @@ import {
   UpdateGoogleNewsParams,
   ProcessNewsResult,
   FetchNewsResult,
-  SanitizeContentResult,
-  TruncateBriefResult,
 } from './type.js';
 
 @Injectable()
@@ -61,6 +58,7 @@ export class GoogleNewsService {
     private readonly newsService: NewsService,
     private readonly newsVoteCountService: NewsVoteCountService,
     private readonly puppeteerService: PuppeteerService,
+    private readonly summarizeService: SummarizeService,
     private dataSource: DataSource,
   ) {
     this.enabledCrawler = boolean(
@@ -68,9 +66,22 @@ export class GoogleNewsService {
     );
   }
 
-  async onApplicationBootstrap() {
-    this.processGoogleNews();
-    this.processNews();
+  async getPendingRetrievalGoogleNews(): Promise<GetPendingRetrievalGoogleNewsResult> {
+    return await this.googleNewsRepository.find({
+      relations: {
+        news: true,
+      },
+      select: {
+        news: {
+          title: true,
+        },
+      },
+      where: {
+        html: IsNull(),
+        retrieveCount: LessThan(MAX_RETRIEVE_GOOGLE_NEWS_ATTEMPTS),
+      },
+      take: GET_PENDING_RETRIEVAL_GOOGLE_NEWS_LIMIT,
+    });
   }
 
   async createGoogleNews(
@@ -98,7 +109,7 @@ export class GoogleNewsService {
   }
 
   @Cron('*/5 * * * *')
-  async processGoogleNews(): Promise<ProcessGoogleNewsResult> {
+  protected async processGoogleNews(): Promise<ProcessGoogleNewsResult> {
     if (!this.enabledCrawler) {
       this.logger.warn(
         `processGoogleNews(): Crawler is disabled (enabledCrawler=${this.enabledCrawler})`,
@@ -180,7 +191,7 @@ export class GoogleNewsService {
   }
 
   @Cron('*/3 * * * *')
-  async processNews(): Promise<ProcessNewsResult> {
+  protected async processNews(): Promise<ProcessNewsResult> {
     if (!this.enabledCrawler) {
       this.logger.warn(
         `processNews(): Crawler is disabled (enabledCrawler=${this.enabledCrawler})`,
@@ -270,24 +281,6 @@ export class GoogleNewsService {
     );
   }
 
-  private async getPendingRetrievalGoogleNews(): Promise<GetPendingRetrievalGoogleNewsResult> {
-    return await this.googleNewsRepository.find({
-      relations: {
-        news: true,
-      },
-      select: {
-        news: {
-          title: true,
-        },
-      },
-      where: {
-        html: IsNull(),
-        retrieveCount: LessThan(MAX_RETRIEVE_GOOGLE_NEWS_ATTEMPTS),
-      },
-      take: GET_PENDING_RETRIEVAL_GOOGLE_NEWS_LIMIT,
-    });
-  }
-
   private async fetchNews(url: string): Promise<FetchNewsResult> {
     let page = null;
 
@@ -296,7 +289,8 @@ export class GoogleNewsService {
       await page.goto(url, { waitUntil: 'networkidle2' });
       const finalUrl = page.url();
       const html = await page.content();
-      const { brief, description } = await this.extractNewsFromHtml(html);
+      const { brief, description } =
+        await this.summarizeService.extractNewsFromHtml(html);
 
       return {
         browserPage: page,
@@ -318,58 +312,5 @@ export class GoogleNewsService {
       brief: '',
       description: '',
     };
-  }
-
-  private async extractNewsFromHtml(
-    html: string,
-  ): Promise<ExtractNewsFromHtmlResult> {
-    try {
-      const article = await extractFromHtml(html);
-      if (!_.has(article, 'content')) {
-        throw new BadRequestException('Failed to extract html');
-      }
-
-      const { content } = article;
-      const description = this.sanitizeContent(content);
-
-      return {
-        brief: this.truncateBrief(description),
-        description,
-      };
-    } catch (error) {
-      this.logger.error(
-        `summarizeNewsFromHtml(): Failed to summarize article (error=${inspect(error)})`,
-      );
-    }
-
-    return {
-      brief: '',
-      description: '',
-    };
-  }
-
-  private sanitizeContent(content: string): SanitizeContentResult {
-    const options = {
-      selectors: [
-        { selector: 'a', options: { ignoreHref: true } },
-        { selector: 'img', format: 'skip' },
-        { selector: 'h1', options: { uppercase: false } },
-        { selector: 'h2', options: { uppercase: false } },
-        { selector: 'h3', options: { uppercase: false } },
-        { selector: 'h4', options: { uppercase: false } },
-        { selector: 'h5', options: { uppercase: false } },
-        { selector: 'h6', options: { uppercase: false } },
-      ],
-      preserveNewlines: true,
-    };
-
-    return _.trim(_.replace(convert(content, options), /\s+/g, ' '));
-  }
-
-  private truncateBrief(description: string): TruncateBriefResult {
-    return _.truncate(description, {
-      length: 150,
-      omission: '...',
-    });
   }
 }

@@ -57,6 +57,8 @@ export type UpdateGoogleNewsParams = {
   retrieveCount?: number;
 };
 
+export type GetPendingRetrievalGoogleNewsResult = GoogleNewsEntity[];
+
 export type CreateGoogleNewsResult = GoogleNewsEntity;
 
 export type UpdateGoogleNewsResult = GoogleNewsEntity;
@@ -73,8 +75,6 @@ export type ExtractGoogleNewsItemResult = GoogleNewsItem;
 
 export type IsValidGoogleNewsItemResult = boolean;
 
-export type GetPendingRetrievalGoogleNewsResult = GoogleNewsEntity[];
-
 export type FetchNewsResult = {
   browserPage: Page;
   html: string;
@@ -82,12 +82,3 @@ export type FetchNewsResult = {
   brief: string;
   description: string;
 };
-
-export type ExtractNewsFromHtmlResult = {
-  brief: string;
-  description: string;
-};
-
-export type SanitizeContentResult = string;
-
-export type TruncateBriefResult = string;

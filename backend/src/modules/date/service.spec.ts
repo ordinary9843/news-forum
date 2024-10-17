@@ -4,6 +4,8 @@ import { Test } from '@nestjs/testing';
 
 import { DateService } from './service';
 
+const date = new Date(2024, 1, 1, 13, 14, 15);
+
 describe('DateService', () => {
   let dateService: DateService;
 
@@ -21,7 +23,6 @@ describe('DateService', () => {
 
   describe('format', () => {
     it('should format the date', () => {
-      const date = new Date(2024, 1, 1, 13, 14, 15);
       expect(dateService.format(date)).toBe('2024-02-01 13:14:15');
       expect(dateService.format(date, 'yyyy-MM-dd HH:mm:ss')).toBe(
         '2024-02-01 13:14:15',

@@ -34,7 +34,7 @@ describe('PuppeteerService', () => {
         {
           provide: ConfigService,
           useValue: {
-            get: jest.fn().mockReturnValue('/path/to/chrome'),
+            get: jest.fn(),
           },
         },
       ],

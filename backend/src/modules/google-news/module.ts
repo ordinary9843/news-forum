@@ -8,6 +8,8 @@ import { GoogleNewsEntity } from '../../entities/google-news/entity.js';
 import { NewsVoteCountModule } from '../news-vote-count/module.js';
 import { PuppeteerModule } from '../puppeteer/module.js';
 
+import { SummarizeModule } from '../summarize/module.js';
+
 import { GoogleNewsService } from './service.js';
 
 @Module({
@@ -16,6 +18,7 @@ import { GoogleNewsService } from './service.js';
     NewsModule,
     NewsVoteCountModule,
     PuppeteerModule,
+    SummarizeModule,
   ],
   providers: [GoogleNewsService],
   exports: [GoogleNewsService],
