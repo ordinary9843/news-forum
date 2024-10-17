@@ -15,6 +15,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { NewsModule } from '../../apis/news/module.js';
 import { NewsCategoryModule } from '../../apis/news-category/module.js';
 import { NewsVoteModule } from '../../apis/news-vote/module.js';
+import AppConfig from '../../configs/app/config.js';
 import PuppeteerConfig from '../../configs/puppeteer/config.js';
 import RedisConfig from '../../configs/redis/config.js';
 import { dataSourceOptions } from '../../configs/typeorm/config.js';
@@ -47,6 +48,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
       isGlobal: true,
       cache: true,
       load: [
+        new AppConfig().registerConfig(),
         new PuppeteerConfig().registerConfig(),
         new RedisConfig().registerConfig(),
       ],
