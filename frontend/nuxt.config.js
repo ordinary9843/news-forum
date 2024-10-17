@@ -75,15 +75,15 @@ export default {
   },
 
   proxy: {
-    // '/DEV': {
-    //   target: '', // 代理地址
-    //   ws: true, // 代理websockets
-    //   secure: true,
-    //   changeOrigin: true // 虛擬的站點需要更管origin，是否跨域
-    //   // pathRewrite: {
-    //   //   '^/api': '/',
-    //   // },
-    // }
+    '/api': {
+      target: 'http://localhost', // 代理地址
+      ws: true, // 代理websockets
+      secure: true,
+      changeOrigin: true // 虛擬的站點需要更管origin，是否跨域
+      // pathRewrite: {
+      //   '^/api': '/',
+      // },
+    }
   },
 
   // Build Configuration: https://go.nuxtjs.dev/config-build

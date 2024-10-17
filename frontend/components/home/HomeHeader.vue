@@ -68,31 +68,68 @@
 </template>
 
 <script>
-import { mapActions, mapState } from 'vuex'
+import { mapActions, mapState, mapMutations } from 'vuex'
 export default {
   name: 'HomeHeader',
   data() {
     return {
-      activeCategory: '',
       drawerVisible: false,
     }
   },
   computed: {
-    ...mapState(['categoryOptions', 'windowWidth']),
+    ...mapState(['categoryOptions', 'windowWidth', 'activeCategory']),
   },
   async created() {
+    // 拿取類別資料
     await this.getCategories()
     if (this.categoryOptions.length > 0) {
-      this.activeCategory = this.categoryOptions[0].value
-      this.getNews({ type: this.categoryOptions[0].value })
+      // 預設選取第一個類別
+      this.SET_INDEX({
+        key: 'activeCategory',
+        val: this.categoryOptions[0].value,
+      })
+      // 拿取新聞資料
+      const payload = {
+        reset: true,
+        category: this.categoryOptions[0].value,
+      }
+      const newsResult = await this.getNews(payload)
+      // 若沒有拿成功，則跳出提示
+      if (newsResult.status !== 'success') {
+        this.$message.error(this.$t('home.getDataErrorMessage'))
+      }
     }
   },
   mounted() {},
   methods: {
     ...mapActions(['getCategories', 'getNews']),
-    changeActiveCategory(value) {
-      this.activeCategory = value
-      this.getNews({ type: value })
+    ...mapMutations(['SET_INDEX']),
+    async changeActiveCategory(value) {
+      // 關閉 drawer
+      this.drawerOnClose()
+      // 設定 activeCategory
+      this.SET_INDEX({
+        key: 'activeCategory',
+        val: value,
+      })
+      // 滾輪拉回最頂端
+      document
+        .querySelector('.IndexPage-wrap')
+        .scrollTo({ top: 0, behavior: 'smooth' })
+      // 把新聞清空
+      this.SET_INDEX({
+        key: 'newsList',
+        val: [],
+      })
+      // 拿取新類別新聞資料
+      const payload = {
+        category: value,
+      }
+      const newsResult = await this.getNews(payload)
+      // 若沒有拿成功，則跳出提示
+      if (newsResult.status !== 'success') {
+        this.$message.error(this.$t('home.getDataErrorMessage'))
+      }
     },
     drawerOnClose() {
       this.drawerVisible = false
