@@ -1,5 +1,5 @@
 import { HttpStatus } from '@nestjs/common';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import {
   IsBoolean,
@@ -77,12 +77,12 @@ export class PaginatedNews {
 }
 
 export class GetNewsListQuery {
-  @ApiProperty({ example: false })
+  @ApiPropertyOptional({ example: false })
   @IsBoolean()
   @IsOptional()
   reset?: boolean;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example:
       'VGh1IE9jdCAxNyAyMDI0IDA4OjAzOjEyIEdNVCswODAwICjlj7DljJfmqJnmupbmmYLplpMp',
   })
@@ -90,13 +90,13 @@ export class GetNewsListQuery {
   @IsOptional()
   nextToken?: string;
 
-  @ApiProperty({ example: GET_NEWS_LIST_LIMIT })
+  @ApiPropertyOptional({ example: GET_NEWS_LIST_LIMIT })
   @Min(10)
   @Max(100)
   @IsOptional()
   limit?: number;
 
-  @ApiProperty({ example: Category.BUSINESS })
+  @ApiPropertyOptional({ example: Category.BUSINESS })
   @IsEnum(Category)
   @IsOptional()
   category?: Category;
