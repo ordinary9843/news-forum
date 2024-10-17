@@ -5,11 +5,11 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
+import _ from 'lodash';
 import { Repository } from 'typeorm';
 
 import { NewsVoteEntity } from '../../entities/news-vote/entity.js';
 
-import { JsonService } from '../../modules/json/service.js';
 import { NewsVoteCountService } from '../../modules/news-vote-count/service.js';
 import { RedisService } from '../../modules/redis/service.js';
 
@@ -33,7 +33,6 @@ export class NewsVoteService {
     private readonly newsService: NewsService,
     private readonly newsVoteCountService: NewsVoteCountService,
     private readonly redisService: RedisService,
-    private readonly jsonService: JsonService,
   ) {}
 
   async castVote(params: CastVoteParams): Promise<CastVoteResult> {
@@ -92,6 +91,6 @@ export class NewsVoteService {
   private generateCastVoteCacheKey(
     params: GenerateCastVoteCacheKeyParams,
   ): GenerateCastVoteCacheKeyResult {
-    return `news_vote_cast_vote_${this.jsonService.stringify(params)}`;
+    return `news_vote_cast_vote_${_.join(_.values(params), '_')}`;
   }
 }

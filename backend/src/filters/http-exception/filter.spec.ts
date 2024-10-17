@@ -24,13 +24,14 @@ const mockArgumentsHost = {
 };
 const mockHttpExceptionMessage = 'mock.http.exception.message';
 const mockHttpExceptionStatus = HttpStatus.BAD_REQUEST;
-const httpException: HttpException = new HttpException(
+const mockHttpException = new HttpException(
   mockHttpExceptionMessage,
   mockHttpExceptionStatus,
 );
 const mockUnknownExceptionMessage = 'mock.unknown.exception.message';
 const mockUnknownExceptionStatus = HttpStatus.INTERNAL_SERVER_ERROR;
 const mockUnknownException = new Error(mockUnknownExceptionMessage);
+const mockHttpExceptionMessages = [mockHttpExceptionMessage];
 
 describe('HttpExceptionFilter', () => {
   let httpExceptionFilter: HttpExceptionFilter;
@@ -48,7 +49,7 @@ describe('HttpExceptionFilter', () => {
   });
 
   it('should handle http exception', () => {
-    httpExceptionFilter.catch(httpException, mockArgumentsHost);
+    httpExceptionFilter.catch(mockHttpException, mockArgumentsHost);
     expect(mockResponse.status).toHaveBeenCalledWith(mockHttpExceptionStatus);
     expect(mockResponse.status).toHaveBeenCalledTimes(1);
     expect(mockResponse.header).toHaveBeenCalledWith(

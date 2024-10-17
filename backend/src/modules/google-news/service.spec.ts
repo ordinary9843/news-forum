@@ -4,9 +4,10 @@ import { NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository, DataSource, FindOperator } from 'typeorm';
+import { Repository, FindOperator } from 'typeorm';
 
 import {
+  MOCK_DATA_SOURCE,
   MOCK_REDIS_CLIENT,
   MOCK_REPOSITORIES,
 } from '../../../test/constants.js';
@@ -56,18 +57,7 @@ describe('GoogleNewsService', () => {
         PuppeteerService,
         RedisService,
         SummarizeService,
-        {
-          provide: DataSource,
-          useValue: {
-            createQueryRunner: jest.fn().mockReturnValue({
-              connect: jest.fn(),
-              startTransaction: jest.fn(),
-              commitTransaction: jest.fn(),
-              rollbackTransaction: jest.fn(),
-              release: jest.fn(),
-            }),
-          },
-        },
+        MOCK_DATA_SOURCE,
         {
           provide: REDIS_PROVIDER_NAME,
           useValue: MOCK_REDIS_CLIENT,
