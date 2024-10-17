@@ -1,91 +1,82 @@
 // npm run test -- ./src/filters/http-exception/filter.spec.ts
 
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { ArgumentsHost } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { Response } from 'express';
-
-import { BaseTestSuite } from '../../../test/base/test-suite/abstract.test.suite';
-import {
-  InitializeResult,
-  RunTestsResult,
-} from '../../../test/base/test-suite/type';
 
 import { HttpExceptionFilter } from './filter';
 
-const success: boolean = false;
-const contentType: string = 'application/json; charset=utf-8';
-const response: Response = {
+const mockSuccess = false;
+const mockContentType = 'application/json; charset=utf-8';
+const mockResponse = {
   status: jest.fn().mockReturnThis(),
   header: jest.fn().mockReturnThis(),
   send: jest.fn().mockReturnThis(),
-} as unknown as Response;
-const argumentsHost: ArgumentsHost = {
+};
+const mockArgumentsHost = {
   getArgs: jest.fn(),
   getArgByIndex: jest.fn(),
   switchToRpc: jest.fn(),
   switchToWs: jest.fn(),
   getType: jest.fn(),
   switchToHttp: jest.fn().mockReturnValue({
-    getResponse: jest.fn().mockReturnValue(response),
+    getResponse: jest.fn().mockReturnValue(mockResponse),
   }),
-} as ArgumentsHost;
-const httpExceptionMessage: string = 'test.http.exception.message';
-const httpExceptionStatus: HttpStatus = HttpStatus.BAD_REQUEST;
+};
+const mockHttpExceptionMessage = 'mock.http.exception.message';
+const mockHttpExceptionStatus = HttpStatus.BAD_REQUEST;
 const httpException: HttpException = new HttpException(
-  httpExceptionMessage,
-  httpExceptionStatus,
+  mockHttpExceptionMessage,
+  mockHttpExceptionStatus,
 );
-const unknownExceptionMessage: string = 'test.unknown.exception.message';
-const unknownExceptionStatus: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-const unknownException: Error = new Error(unknownExceptionMessage);
+const mockUnknownExceptionMessage = 'mock.unknown.exception.message';
+const mockUnknownExceptionStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+const mockUnknownException = new Error(mockUnknownExceptionMessage);
 
-class HttpExceptionFilterTest extends BaseTestSuite {
-  private httpExceptionFilter: HttpExceptionFilter;
+describe('HttpExceptionFilter', () => {
+  let httpExceptionFilter: HttpExceptionFilter;
 
-  async initialize(): Promise<InitializeResult> {
-    this.module = await Test.createTestingModule({
+  beforeEach(async () => {
+    const module = await Test.createTestingModule({
       providers: [HttpExceptionFilter],
     }).compile();
-    this.httpExceptionFilter =
-      this.module.get<HttpExceptionFilter>(HttpExceptionFilter);
-  }
+    httpExceptionFilter = module.get<HttpExceptionFilter>(HttpExceptionFilter);
+  });
 
-  async runTests(): Promise<RunTestsResult> {
-    beforeEach(async () => {
-      await this.initialize();
+  afterEach(() => {
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+  });
+
+  it('should handle http exception', () => {
+    httpExceptionFilter.catch(httpException, mockArgumentsHost);
+    expect(mockResponse.status).toHaveBeenCalledWith(mockHttpExceptionStatus);
+    expect(mockResponse.status).toHaveBeenCalledTimes(1);
+    expect(mockResponse.header).toHaveBeenCalledWith(
+      'Content-Type',
+      mockContentType,
+    );
+    expect(mockResponse.header).toHaveBeenCalledTimes(1);
+    expect(mockResponse.send).toHaveBeenCalledWith({
+      success: mockSuccess,
+      statusCode: mockHttpExceptionStatus,
+      message: mockHttpExceptionMessage,
     });
+    expect(mockResponse.send).toHaveBeenCalledTimes(1);
+  });
 
-    afterEach(() => {
-      jest.clearAllMocks();
-      jest.restoreAllMocks();
+  it('should handle non http exception', () => {
+    httpExceptionFilter.catch(mockUnknownException, mockArgumentsHost);
+    expect(mockResponse.status).toHaveBeenCalledWith(
+      mockUnknownExceptionStatus,
+    );
+    expect(mockResponse.header).toHaveBeenCalledWith(
+      'Content-Type',
+      mockContentType,
+    );
+    expect(mockResponse.send).toHaveBeenCalledWith({
+      success: mockSuccess,
+      statusCode: mockUnknownExceptionStatus,
+      message: mockUnknownExceptionMessage,
     });
-
-    it('should handle http exception', () => {
-      this.httpExceptionFilter.catch(httpException, argumentsHost);
-      expect(response.status).toHaveBeenCalledWith(httpExceptionStatus);
-      expect(response.status).toHaveBeenCalledTimes(1);
-      expect(response.header).toHaveBeenCalledWith('Content-Type', contentType);
-      expect(response.header).toHaveBeenCalledTimes(1);
-      expect(response.send).toHaveBeenCalledWith({
-        success,
-        statusCode: httpExceptionStatus,
-        message: httpExceptionMessage,
-      });
-      expect(response.send).toHaveBeenCalledTimes(1);
-    });
-
-    it('should handle non http exception', () => {
-      this.httpExceptionFilter.catch(unknownException, argumentsHost);
-      expect(response.status).toHaveBeenCalledWith(unknownExceptionStatus);
-      expect(response.header).toHaveBeenCalledWith('Content-Type', contentType);
-      expect(response.send).toHaveBeenCalledWith({
-        success,
-        statusCode: unknownExceptionStatus,
-        message: unknownExceptionMessage,
-      });
-    });
-  }
-}
-
-new HttpExceptionFilterTest().runTests();
+  });
+});
