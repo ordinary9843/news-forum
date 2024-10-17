@@ -25,9 +25,8 @@ import { NewsVoteService } from './service';
 
 const mockNewsId = 1;
 const mockBias = Bias.FAIR;
-const mockVotedIp = 'mock.127.0.0.1';
+const mockVotedIp = '127.0.0.1';
 const mockBody = { bias: mockBias };
-
 const mockVoteStatistics = {
   fair: { count: 5, percent: 9 },
   slightlyBiased: { count: 10, percent: 19 },

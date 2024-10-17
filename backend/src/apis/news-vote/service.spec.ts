@@ -26,7 +26,7 @@ import { NewsVoteService } from './service.js';
 const mockId = 1;
 const mockNewsId = 1;
 const mockBias = Bias.FAIR;
-const mockVotedIp = 'mock.127.0.0.1';
+const mockVotedIp = '127.0.0.1';
 const mockParams = {
   newsId: mockNewsId,
   bias: mockBias,
@@ -69,7 +69,6 @@ describe('NewsVoteService', () => {
         ...MOCK_REPOSITORIES([NewsEntity, NewsVoteEntity, NewsVoteCountEntity]),
       ],
     }).compile();
-
     newsVoteService = module.get<NewsVoteService>(NewsVoteService);
     newsVoteRepository = module.get<Repository<NewsVoteEntity>>(
       getRepositoryToken(NewsVoteEntity),
