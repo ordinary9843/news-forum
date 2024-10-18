@@ -286,7 +286,7 @@ export class GoogleNewsService {
 
     try {
       page = await this.puppeteerService.openPage();
-      await page.goto(url, { waitUntil: 'networkidle2' });
+      await page.goto(url, { waitUntil: 'networkidle2', timeout: 90000 });
       const finalUrl = page.url();
       const html = await page.content();
       const { brief, description } =
