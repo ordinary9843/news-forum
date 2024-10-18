@@ -46,4 +46,5 @@ RUN apt-get update && apt-get install -y \
   libnss3 \ 
   lsb-release \ 
   xdg-utils \ 
-  wget
+  wget \
+  curl  

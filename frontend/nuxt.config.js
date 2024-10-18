@@ -4,8 +4,11 @@ export default {
   ssr: false,
 
   // Target: https://go.nuxtjs.dev/config-target
-  target: 'static',
-
+  target: 'server',
+  server: {
+    host: "0.0.0.0",
+    port: "3000",
+  },
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
     title: '新聞民意廣場',

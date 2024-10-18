@@ -1,6 +1,8 @@
 services:
   nginx:
-    build: ./docker/nginx/
+    build:
+      context: ./
+      dockerfile: ./docker/nginx/Dockerfile
     image: ${DOCKER_PREFIX}-nginx
     container_name: ${DOCKER_PREFIX}-nginx
     restart: always
@@ -16,9 +18,22 @@ services:
       - public-network
       - internal-network
     depends_on:
+      - frontend
       - backend
     links:
+      - frontend
       - backend
+  frontend:
+    build:
+      context: ./
+      dockerfile: ./docker/frontend/Dockerfile
+    image: ${DOCKER_PREFIX}-frontend
+    container_name: ${DOCKER_PREFIX}-frontend
+    restart: always
+    env_file:
+      - .env
+    networks:
+      - internal-network
   backend:
     build:
       context: ./
@@ -28,7 +43,6 @@ services:
     restart: always
     env_file:
       - .env
-    command: /bin/sh -c "npm run build && pm2-runtime dist/main.js"
     networks:
       - internal-network
     depends_on:
