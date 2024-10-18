@@ -45,6 +45,7 @@ export class PuppeteerService {
     try {
       const browser = await this.getBrowser();
       const page = await browser.newPage();
+      page.setDefaultNavigationTimeout(60000);
       await page.setExtraHTTPHeaders({
         'Sec-Ch-Ua':
           '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
