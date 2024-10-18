@@ -31,7 +31,6 @@ services:
     restart: always
     env_file:
       - .env
-    command: /bin/sh -c "npm run build"
     networks:
       - internal-network
   backend:
