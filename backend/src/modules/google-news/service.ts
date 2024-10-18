@@ -49,6 +49,7 @@ import {
 @Injectable()
 export class GoogleNewsService {
   private readonly logger = new Logger(GoogleNewsService.name);
+  private enabledSchedule: boolean;
   private enabledCrawler: boolean;
 
   constructor(
@@ -61,6 +62,9 @@ export class GoogleNewsService {
     private readonly summarizeService: SummarizeService,
     private dataSource: DataSource,
   ) {
+    this.enabledSchedule = boolean(
+      this.configService.get<boolean>('APP.ENABLED_SCHEDULE'),
+    );
     this.enabledCrawler = boolean(
       this.configService.get<boolean>('APP.ENABLED_CRAWLER'),
     );
@@ -115,9 +119,9 @@ export class GoogleNewsService {
 
   @Cron('*/5 * * * *')
   protected async processGoogleNews(): Promise<ProcessGoogleNewsResult> {
-    if (!this.enabledCrawler) {
+    if (!this.enabledSchedule || !this.enabledCrawler) {
       this.logger.warn(
-        `processGoogleNews(): Crawler is disabled (enabledCrawler=${this.enabledCrawler})`,
+        `processGoogleNews(): Crawler is disabled (enabledSchedule=${this.enabledSchedule}, enabledCrawler=${this.enabledCrawler})`,
       );
       return;
     }
@@ -197,9 +201,9 @@ export class GoogleNewsService {
 
   @Cron('*/3 * * * *')
   protected async processNews(): Promise<ProcessNewsResult> {
-    if (!this.enabledCrawler) {
+    if (!this.enabledSchedule || !this.enabledCrawler) {
       this.logger.warn(
-        `processNews(): Crawler is disabled (enabledCrawler=${this.enabledCrawler})`,
+        `processNews(): Crawler is disabled (enabledSchedule=${this.enabledSchedule}, enabledCrawler=${this.enabledCrawler})`,
       );
       return;
     }
