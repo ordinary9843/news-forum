@@ -5,7 +5,7 @@ import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 
 import { DateTime } from 'luxon';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 
 import {
   MOCK_DATA_SOURCE,
@@ -72,6 +72,19 @@ const mockNewsEntity = Object.assign(new NewsEntity(), {
   description: mockDescription,
 });
 const mockLastQuery = { lastLimit: 10, lastCategory: undefined };
+const mockQueryBuilder = {
+  leftJoinAndSelect: jest.fn().mockReturnThis(),
+  where: jest.fn().mockReturnThis(),
+  andWhere: jest.fn().mockReturnThis(),
+  orderBy: jest.fn().mockReturnThis(),
+  addOrderBy: jest.fn().mockReturnThis(),
+  take: jest.fn().mockReturnThis(),
+  getMany: jest.fn(),
+  getOne: jest.fn(),
+  getCount: jest.fn(),
+  skip: jest.fn().mockReturnThis(),
+  limit: jest.fn().mockReturnThis(),
+} as unknown as SelectQueryBuilder<NewsEntity>;
 
 describe('NewsService', () => {
   let newsService: NewsService;
@@ -105,37 +118,55 @@ describe('NewsService', () => {
 
   describe('getNewsList', () => {
     it('should return a list of news', async () => {
-      jest.spyOn(newsRepository, 'find').mockResolvedValue([mockNewsEntity]);
+      jest
+        .spyOn(newsRepository, 'createQueryBuilder')
+        .mockReturnValue(mockQueryBuilder);
+      jest
+        .spyOn(mockQueryBuilder, 'getMany')
+        .mockResolvedValue([mockNewsEntity]);
       jest.spyOn(redisService, 'exists').mockResolvedValue(0);
-      const result = await newsService.getNewsList(mockParams);
-      expect(result).toHaveProperty('nextToken');
-      expect(result).toHaveProperty('items');
-      expect(result.items.length).toBe(1);
-      expect(newsRepository.find).toHaveBeenCalledWith(expect.any(Object));
+      const newsList = await newsService.getNewsList(mockParams);
+      expect(newsList).toHaveProperty('nextToken');
+      expect(newsList).toHaveProperty('items');
+      expect(newsList.items.length).toBe(1);
+      expect(mockQueryBuilder.getMany).toHaveBeenCalled();
     });
 
     it('should return an empty list if no news found', async () => {
-      jest.spyOn(newsRepository, 'find').mockResolvedValue([]);
+      jest
+        .spyOn(newsRepository, 'createQueryBuilder')
+        .mockReturnValue(mockQueryBuilder);
+      jest.spyOn(mockQueryBuilder, 'getMany').mockResolvedValue([]);
       jest.spyOn(redisService, 'exists').mockResolvedValue(0);
-      const result = await newsService.getNewsList(mockParams);
-      expect(result).toHaveProperty('nextToken');
-      expect(result).toHaveProperty('items');
-      expect(result.items.length).toBe(0);
+      const newsList = await newsService.getNewsList(mockParams);
+      expect(newsList).toHaveProperty('nextToken');
+      expect(newsList).toHaveProperty('items');
+      expect(newsList.items.length).toBe(0);
+      expect(mockQueryBuilder.getMany).toHaveBeenCalled();
     });
 
     it('should handle nextToken and reset query logic', async () => {
-      jest.spyOn(newsRepository, 'find').mockResolvedValue([mockNewsEntity]);
+      jest
+        .spyOn(newsRepository, 'createQueryBuilder')
+        .mockReturnValue(mockQueryBuilder);
+      jest
+        .spyOn(mockQueryBuilder, 'getMany')
+        .mockResolvedValue([mockNewsEntity]);
       jest.spyOn(redisService, 'exists').mockResolvedValue(1);
       jest
         .spyOn(redisService, 'get')
         .mockResolvedValue(JSON.stringify(mockLastQuery));
-      const result = await newsService.getNewsList(mockParams);
-      expect(result).toHaveProperty('nextToken');
-      expect(result).toHaveProperty('items');
-      expect(result.items.length).toBe(1);
+      const newsList = await newsService.getNewsList(mockParams);
+      expect(newsList).toHaveProperty('nextToken');
+      expect(newsList).toHaveProperty('items');
+      expect(newsList.items.length).toBe(1);
+      expect(mockQueryBuilder.getMany).toHaveBeenCalled();
     });
 
     it('should throw not found exception when trying to update news with invalid GUID', async () => {
+      jest
+        .spyOn(newsRepository, 'createQueryBuilder')
+        .mockReturnValue(mockQueryBuilder);
       jest.spyOn(newsRepository, 'findOneBy').mockResolvedValue(null);
       await expect(
         newsService.updateNewsByGuid(mockGuid, {
