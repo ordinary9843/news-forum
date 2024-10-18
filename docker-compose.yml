@@ -1,8 +1,6 @@
 services:
   nginx:
-    build:
-      context: ./
-      dockerfile: ./docker/nginx/Dockerfile
+    build: ./docker/nginx/
     image: ${DOCKER_PREFIX}-nginx
     container_name: ${DOCKER_PREFIX}-nginx
     restart: always
@@ -11,6 +9,7 @@ services:
     volumes:
       - ./docker/nginx/conf/default.conf:/etc/nginx/conf.d/default.conf
       - ./docker/nginx/log:/var/log/nginx
+      - ./frontend/dist:/usr/share/nginx/html
     environment:
       - TZ=${TZ}
     command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
@@ -32,6 +31,7 @@ services:
     restart: always
     env_file:
       - .env
+    command: /bin/sh -c "npm run build"
     networks:
       - internal-network
   backend:
@@ -43,6 +43,27 @@ services:
     restart: always
     env_file:
       - .env
+    environment:
+      - ENABLED_SCHEDULE=false
+    networks:
+      - internal-network
+    depends_on:
+      - postgres
+      - redis
+    links:
+      - postgres
+      - redis
+  cronjob:
+    build:
+      context: ./
+      dockerfile: ./docker/cronjob/Dockerfile
+    image: ${DOCKER_PREFIX}-cronjob
+    container_name: ${DOCKER_PREFIX}-cronjob
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - ENABLED_SCHEDULE=true
     networks:
       - internal-network
     depends_on:

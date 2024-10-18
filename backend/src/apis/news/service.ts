@@ -3,8 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 import _ from 'lodash';
 import { DateTime } from 'luxon';
-import { LessThan, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
+import { NEWS_TABLE } from '../../entities/news/constant.js';
 import { NewsEntity } from '../../entities/news/entity.js';
 
 import { DateService } from '../../modules/date/service.js';
@@ -65,28 +66,33 @@ export class NewsService {
     const decodedNextToken = !shouldResetQuery
       ? this.decodeNextToken(_.get(params, 'nextToken', null))
       : null;
-    const items = await this.newsRepository.find({
-      relations: {
-        vote: true,
-        voteCounts: true,
-      },
-      where: {
-        isCollected: true,
-        ...(decodedNextToken
-          ? {
-              publishedAt: LessThan(
-                DateTime.fromJSDate(new Date(decodedNextToken)).toJSDate(),
-              ),
-            }
-          : {}),
-        ...(category ? { category } : {}),
-      },
-      take: limit,
-      order: {
-        publishedAt: 'DESC',
-        id: 'DESC',
-      },
-    });
+    const queryBuilder = this.newsRepository
+      .createQueryBuilder(NEWS_TABLE)
+      .leftJoinAndSelect(
+        `${NEWS_TABLE}.vote`,
+        'vote',
+        'vote.votedIp = :votedIp',
+        {
+          votedIp: clientIp,
+        },
+      )
+      .leftJoinAndSelect(`${NEWS_TABLE}.voteCounts`, 'voteCounts')
+      .where(`${NEWS_TABLE}.isCollected = :isCollected`, { isCollected: true })
+      .orderBy(`${NEWS_TABLE}.publishedAt`, 'DESC')
+      .addOrderBy(`${NEWS_TABLE}.id`, 'DESC')
+      .take(limit);
+    if (decodedNextToken) {
+      queryBuilder.andWhere(`${NEWS_TABLE}.publishedAt < :decodedNextToken`, {
+        decodedNextToken: DateTime.fromJSDate(
+          new Date(decodedNextToken),
+        ).toJSDate(),
+      });
+    }
+    if (category) {
+      queryBuilder.andWhere(`${NEWS_TABLE}.category = :category`, { category });
+    }
+
+    const items = await queryBuilder.getMany();
     await this.updateLastQuery(cacheKey, {
       limit,
       category,
