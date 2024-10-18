@@ -12,6 +12,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { boolean } from 'boolean';
+
 import { NewsModule } from '../../apis/news/module.js';
 import { NewsCategoryModule } from '../../apis/news-category/module.js';
 import { NewsVoteModule } from '../../apis/news-vote/module.js';
@@ -60,7 +62,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
     NewsVoteModule,
     JsonModule,
     RedisModule,
-    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       useFactory: async () => ({
         ...dataSourceOptions,
@@ -78,6 +79,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
         },
       ],
     }),
+    ...(boolean(process.env.ENABLED_SCHEDULE)
+      ? [ScheduleModule.forRoot()]
+      : []),
   ],
   providers: [
     HttpExceptionFilter,

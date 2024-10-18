@@ -66,6 +66,11 @@ export class GoogleNewsService {
     );
   }
 
+  onApplicationBootstrap() {
+    this.processGoogleNews();
+    this.processNews();
+  }
+
   async getPendingRetrievalGoogleNews(): Promise<GetPendingRetrievalGoogleNewsResult> {
     return await this.googleNewsRepository.find({
       relations: {
