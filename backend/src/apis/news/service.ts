@@ -71,12 +71,16 @@ export class NewsService {
       .leftJoinAndSelect(
         `${NEWS_TABLE}.vote`,
         'vote',
-        'vote.votedIp = :votedIp',
+        `vote.newsId = ${NEWS_TABLE}.id AND vote.votedIp = :votedIp`,
         {
           votedIp: clientIp,
         },
       )
-      .leftJoinAndSelect(`${NEWS_TABLE}.voteCounts`, 'voteCounts')
+      .leftJoinAndSelect(
+        `${NEWS_TABLE}.voteCounts`,
+        'voteCounts',
+        `voteCounts.newsId = ${NEWS_TABLE}.id`,
+      )
       .where(`${NEWS_TABLE}.isCollected = :isCollected`, { isCollected: true })
       .orderBy(`${NEWS_TABLE}.publishedAt`, 'DESC')
       .addOrderBy(`${NEWS_TABLE}.id`, 'DESC')
